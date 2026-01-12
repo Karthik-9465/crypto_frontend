@@ -1,16 +1,19 @@
+import { useState } from "react";
 import HoldingsTable from "../components/portfolio/HoldingsTable";
+import AssetDrawer from "../components/portfolio/AssetDrawer";
 
 export default function PortfolioPage() {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Portfolio</h1>
-        <p className="text-slate-400">
-          All your exchange and wallet holdings (mock data).
-        </p>
-      </div>
+  const [selectedAsset, setSelectedAsset] = useState(null);
 
-      <HoldingsTable />
+  return (
+    <div className="relative">
+      <HoldingsTable onViewAsset={setSelectedAsset} />
+
+      {/* Asset Detail Drawer */}
+      <AssetDrawer
+        asset={selectedAsset}
+        onClose={() => setSelectedAsset(null)}
+      />
     </div>
   );
 }

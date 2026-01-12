@@ -1,53 +1,82 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
 import DashboardLayout from "./components/layout/DashboardLayout";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 import DashboardPage from "./pages/DashboardPage";
 import PortfolioPage from "./pages/PortfolioPage";
 import RiskAlertsPage from "./pages/RiskAlertsPage";
 import ReportsPage from "./pages/ReportsPage";
-import AuthPage from "./pages/AuthPage";
+import SettingsPage from "./pages/SettingsPage";
+import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 
 export default function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/auth" element={<AuthPage />} />
+        {/* ---------------- PUBLIC ROUTES ---------------- */}
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
+        {/* ---------------- PROTECTED ROUTES ---------------- */}
         <Route
           path="/"
           element={
-            <DashboardLayout>
-              <DashboardPage />
-            </DashboardLayout>
+            <ProtectedRoute>
+              <DashboardLayout>
+                <DashboardPage />
+              </DashboardLayout>
+            </ProtectedRoute>
           }
         />
+
         <Route
           path="/portfolio"
           element={
-            <DashboardLayout>
-              <PortfolioPage />
-            </DashboardLayout>
+            <ProtectedRoute>
+              <DashboardLayout>
+                <PortfolioPage />
+              </DashboardLayout>
+            </ProtectedRoute>
           }
         />
+
         <Route
           path="/alerts"
           element={
-            <DashboardLayout>
-              <RiskAlertsPage />
-            </DashboardLayout>
+            <ProtectedRoute>
+              <DashboardLayout>
+                <RiskAlertsPage />
+              </DashboardLayout>
+            </ProtectedRoute>
           }
         />
+
         <Route
           path="/reports"
           element={
-            <DashboardLayout>
-              <ReportsPage />
-            </DashboardLayout>
+            <ProtectedRoute>
+              <DashboardLayout>
+                <ReportsPage />
+              </DashboardLayout>
+            </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <SettingsPage />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ---------------- FALLBACK ---------------- */}
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </Router>
   );

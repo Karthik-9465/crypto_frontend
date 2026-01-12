@@ -1,31 +1,25 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import axios from "axios";
+import { login } from "../services/authService";
 
-export default function RegisterPage() {
+export default function LoginPage() {
   const navigate = useNavigate();
 
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleRegister = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
-      await axios.post("http://localhost:8081/api/auth/register", {
-        name,
-        email,
-        password,
-      });
-
-      navigate("/login");
+      await login(email, password);
+      navigate("/");
     } catch (err) {
-      setError(err.response?.data || "Registration failed");
+      setError("Invalid email or password");
     } finally {
       setLoading(false);
     }
@@ -35,7 +29,7 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center bg-slate-900">
       <div className="bg-slate-800 p-8 rounded-xl w-full max-w-md">
         <h2 className="text-2xl font-bold text-white text-center mb-4">
-          Register
+          Login
         </h2>
 
         {error && (
@@ -44,16 +38,7 @@ export default function RegisterPage() {
           </p>
         )}
 
-        <form onSubmit={handleRegister} className="space-y-4">
-          <input
-            type="text"
-            placeholder="Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            className="w-full p-3 rounded bg-slate-700 text-white outline-none"
-          />
-
+        <form onSubmit={handleLogin} className="space-y-4">
           <input
             type="email"
             placeholder="Email"
@@ -77,14 +62,14 @@ export default function RegisterPage() {
             disabled={loading}
             className="w-full bg-green-500 hover:bg-green-600 text-black font-semibold py-3 rounded disabled:opacity-50"
           >
-            {loading ? "Registering..." : "Register"}
+            {loading ? "Logging in..." : "Login"}
           </button>
         </form>
 
         <p className="text-slate-400 text-sm mt-4 text-center">
-          Already have an account?{" "}
-          <Link to="/login" className="text-blue-400">
-            Login
+          Don’t have an account?{" "}
+          <Link to="/register" className="text-blue-400">
+            Register
           </Link>
         </p>
       </div>

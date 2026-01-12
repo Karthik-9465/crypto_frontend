@@ -1,4 +1,4 @@
-// src/components/charts/PortfolioValueChart.jsx
+
 import {
   LineChart,
   Line,
@@ -12,7 +12,7 @@ import {
 // Mock portfolio value over time (days)
 const DATA = [
   { day: "Mon", value: 9500 },
-  { day: "Tue", value: 9800 },
+  { day: "Tue", value: 5800 },
   { day: "Wed", value: 10200 },
   { day: "Thu", value: 10100 },
   { day: "Fri", value: 10450 },
