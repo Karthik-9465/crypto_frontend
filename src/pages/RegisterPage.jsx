@@ -17,15 +17,30 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      await axios.post("http://localhost:8081/api/auth/register", {
-        name,
-        email,
-        password,
-      });
+      const res = await axios.post(
+        "http://localhost:8089/api/account/auth/public/sign-up",
+        null, // 🔴 body NOT required
+        {
+          params: {
+            name,
+            email,
+            password,
+          },
+        }
+      );
+
+      // ✅ token optional (if backend sends)
+      if (res.data?.data?.token) {
+        localStorage.setItem("token", res.data.data.token);
+      }
 
       navigate("/login");
     } catch (err) {
-      setError(err.response?.data || "Registration failed");
+      console.error(err);
+      setError(
+        err.response?.data?.message ||
+        "Email already exists or password invalid"
+      );
     } finally {
       setLoading(false);
     }

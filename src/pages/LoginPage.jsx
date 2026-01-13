@@ -17,7 +17,7 @@ export default function LoginPage() {
 
     try {
       await login(email, password);
-      navigate("/");
+      navigate("/dashboard"); // 🔒 protected page
     } catch (err) {
       setError("Invalid email or password");
     } finally {
@@ -27,8 +27,8 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-900">
-      <div className="bg-slate-800 p-8 rounded-xl w-full max-w-md">
-        <h2 className="text-2xl font-bold text-white text-center mb-4">
+      <div className="bg-slate-800 p-8 rounded-xl w-full max-w-md shadow-lg">
+        <h2 className="text-2xl font-bold text-white text-center mb-6">
           Login
         </h2>
 
@@ -45,7 +45,7 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full p-3 rounded bg-slate-700 text-white outline-none"
+            className="w-full p-3 rounded bg-slate-700 text-white outline-none focus:ring-2 focus:ring-green-500"
           />
 
           <input
@@ -54,7 +54,7 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full p-3 rounded bg-slate-700 text-white outline-none"
+            className="w-full p-3 rounded bg-slate-700 text-white outline-none focus:ring-2 focus:ring-green-500"
           />
 
           <button
@@ -66,9 +66,9 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <p className="text-slate-400 text-sm mt-4 text-center">
+        <p className="text-slate-400 text-sm mt-6 text-center">
           Don’t have an account?{" "}
-          <Link to="/register" className="text-blue-400">
+          <Link to="/register" className="text-blue-400 hover:underline">
             Register
           </Link>
         </p>

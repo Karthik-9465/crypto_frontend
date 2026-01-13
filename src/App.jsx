@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import DashboardLayout from "./components/layout/DashboardLayout";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
+// Pages
 import DashboardPage from "./pages/DashboardPage";
 import PortfolioPage from "./pages/PortfolioPage";
 import RiskAlertsPage from "./pages/RiskAlertsPage";
@@ -10,16 +11,18 @@ import ReportsPage from "./pages/ReportsPage";
 import SettingsPage from "./pages/SettingsPage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import AddExchangePage from "./pages/AddExchangePage";
 
 export default function App() {
   return (
     <Router>
       <Routes>
-        {/* ---------------- PUBLIC ROUTES ---------------- */}
+
+        {/* ================= PUBLIC ROUTES ================= */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
-        {/* ---------------- PROTECTED ROUTES ---------------- */}
+        {/* ================= PROTECTED ROUTES ================= */}
         <Route
           path="/"
           element={
@@ -75,8 +78,21 @@ export default function App() {
           }
         />
 
-        {/* ---------------- FALLBACK ---------------- */}
-        <Route path="*" element={<Navigate to="/" />} />
+        {/* 🔑 ADD EXCHANGE (NEW) */}
+        <Route
+          path="/add-exchange"
+          element={
+            <ProtectedRoute>
+              <DashboardLayout>
+                <AddExchangePage />
+              </DashboardLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* ================= FALLBACK ================= */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+
       </Routes>
     </Router>
   );

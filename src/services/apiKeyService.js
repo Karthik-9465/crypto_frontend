@@ -1,0 +1,20 @@
+import axios from "axios";
+
+const API_URL = "http://localhost:8089/api/apiKey/public";
+
+export const addExchange = async (exchangeData) => {
+  const token = localStorage.getItem("token");
+
+  const response = await axios.post(
+    `${API_URL}/addExchange`,
+    exchangeData,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  return response.data;
+};
