@@ -1,4 +1,4 @@
-export default function HoldingsTable({ data, onView, onEdit }) {
+export default function HoldingsTable({ data, onView, onEdit, onDelete }) {
   return (
     <div className="overflow-x-auto">
       <table className="w-full border border-slate-700 rounded-lg">
@@ -6,7 +6,7 @@ export default function HoldingsTable({ data, onView, onEdit }) {
           <tr>
             <th className="p-3 text-left">Asset</th>
             <th className="p-3 text-left">Quantity</th>
-            <th className="p-3 text-left">Avg Cost</th>
+            <th className="p-3 text-left">Avg Cost (USD)</th>
             <th className="p-3 text-left">Action</th>
           </tr>
         </thead>
@@ -21,10 +21,15 @@ export default function HoldingsTable({ data, onView, onEdit }) {
                 {h.assetSymbol}
               </td>
 
-              <td className="p-3">{h.quantity}</td>
+              <td className="p-3">
+                {Number(h.quantity)}
+              </td>
 
               <td className="p-3">
-                ₹{h.avgCost.toLocaleString("en-IN")}
+                ${Number(h.avgCost).toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </td>
 
               <td className="p-3 space-x-4">
@@ -43,6 +48,15 @@ export default function HoldingsTable({ data, onView, onEdit }) {
                     className="text-green-400 hover:underline"
                   >
                     Edit
+                  </button>
+                )}
+
+                {onDelete && (
+                  <button
+                    onClick={() => onDelete(h)}
+                    className="text-red-400 hover:underline"
+                  >
+                    Delete
                   </button>
                 )}
               </td>

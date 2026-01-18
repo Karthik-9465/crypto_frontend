@@ -11,22 +11,24 @@ export default function PortfolioPage() {
   const [exchangeHoldings, setExchangeHoldings] = useState([]);
   const [manualHoldings, setManualHoldings] = useState([]);
 
-  const [viewAsset, setViewAsset] = useState(null); // 🔥 View
-  const [editAsset, setEditAsset] = useState(null); // ✏️ Edit
+  const [viewAsset, setViewAsset] = useState(null); // 👁 View drawer
+  const [editAsset, setEditAsset] = useState(null); // ✏️ Edit drawer
   const [loading, setLoading] = useState(true);
 
+  // ================= LOAD HOLDINGS =================
   const loadHoldings = async () => {
     try {
       setLoading(true);
+
       const [exRes, manRes] = await Promise.all([
         refreshExchangeHoldings(),
         refreshManualHoldings(),
       ]);
 
-      setExchangeHoldings(exRes.data || []);
-      setManualHoldings(manRes.data || []);
-    } catch (e) {
-      console.error("Failed to load holdings", e);
+      setExchangeHoldings(exRes?.data || []);
+      setManualHoldings(manRes?.data || []);
+    } catch (err) {
+      console.error("Failed to load holdings", err);
     } finally {
       setLoading(false);
     }
@@ -35,6 +37,27 @@ export default function PortfolioPage() {
   useEffect(() => {
     loadHoldings();
   }, []);
+
+  // ================= UI-ONLY DELETE =================
+  const handleDeleteManual = (asset) => {
+    const ok = window.confirm(
+      `Are you sure you want to delete ${asset.assetSymbol}?`
+    );
+
+    if (!ok) return;
+
+    // ❌ Backend call ledu (UI-only delete)
+    setManualHoldings((prev) =>
+      prev.filter(
+        (h) =>
+          !(
+            h.assetSymbol === asset.assetSymbol &&
+            h.quantity === asset.quantity &&
+            h.avgCost === asset.avgCost
+          )
+      )
+    );
+  };
 
   return (
     <div className="p-8 max-w-6xl mx-auto">
@@ -50,6 +73,7 @@ export default function PortfolioPage() {
           <HoldingsTable
             data={exchangeHoldings}
             onView={setViewAsset}
+            // ❌ No delete for exchange holdings
           />
         )}
       </div>
@@ -75,6 +99,7 @@ export default function PortfolioPage() {
             data={manualHoldings}
             onView={setViewAsset}
             onEdit={setEditAsset}
+            onDelete={handleDeleteManual} // ✅ DELETE ENABLED
           />
         )}
       </div>
@@ -85,7 +110,7 @@ export default function PortfolioPage() {
         onClose={() => setViewAsset(null)}
       />
 
-      {/* ================= EDIT DRAWER ================= */}
+      {/* ================= EDIT / ADD DRAWER ================= */}
       <ManualHoldingDrawer
         asset={editAsset}
         onClose={() => setEditAsset(null)}

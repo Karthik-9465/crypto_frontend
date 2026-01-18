@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { getPriceSnapshots } from "../../services/priceSnapshotService";
 
 export default function AssetDrawer({ asset, onClose }) {
-  // ✅ Hooks MUST always be on top
+  // 🔒 Hooks MUST be at top
   const [prices, setPrices] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // 🔄 Load price snapshots when asset changes
+  // 🔄 Fetch price snapshots when drawer opens / asset changes
   useEffect(() => {
     if (!asset || !asset.assetSymbol) return;
 
@@ -24,7 +24,7 @@ export default function AssetDrawer({ asset, onClose }) {
 
         const res = await getPriceSnapshots(asset.assetSymbol);
 
-        // ✅ Backend response: { message, data }
+        // Backend response: { message, data }
         const snapshotData = res?.data?.data || [];
         setPrices(snapshotData);
       } catch (err) {
@@ -69,7 +69,7 @@ export default function AssetDrawer({ asset, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/60 flex justify-end z-50">
       <div className="w-full max-w-md bg-slate-900 h-full p-6 border-l border-slate-700 overflow-y-auto">
-        {/* 🔹 Header */}
+        {/* ================= Header ================= */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold">
             {asset.assetSymbol} Details
@@ -82,7 +82,7 @@ export default function AssetDrawer({ asset, onClose }) {
           </button>
         </div>
 
-        {/* 🔹 Asset Info */}
+        {/* ================= Asset Info ================= */}
         <div className="space-y-2 text-sm mb-6">
           <p>
             <span className="text-slate-400">Quantity:</span>{" "}
@@ -100,7 +100,7 @@ export default function AssetDrawer({ asset, onClose }) {
 
         <hr className="border-slate-700 my-4" />
 
-        {/* 🔹 Price Section */}
+        {/* ================= Price Section ================= */}
         {loading && (
           <p className="text-slate-400">
             Loading price history...
@@ -143,7 +143,7 @@ export default function AssetDrawer({ asset, onClose }) {
               </p>
             </div>
 
-            {/* 🔹 Price History */}
+            {/* ================= Price History ================= */}
             <div className="mt-4">
               <h3 className="text-sm mb-2 text-slate-300">
                 Price History
@@ -167,7 +167,7 @@ export default function AssetDrawer({ asset, onClose }) {
           </>
         )}
 
-        {/* 🔹 Footer */}
+        {/* ================= Footer ================= */}
         <button
           onClick={onClose}
           className="mt-6 w-full bg-red-500 hover:bg-red-600 py-2 rounded"
