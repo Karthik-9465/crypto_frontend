@@ -13,16 +13,17 @@ export default function AddExchangePage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     setSuccess("");
     setError("");
     setLoading(true);
 
     try {
       await addExchange({
-        exchangeName,
-        apiKey,
-        apiSecret,
-        label,
+        exchangeName: exchangeName.trim(),
+        apiKey: apiKey.trim(),
+        apiSecret: apiSecret.trim(),
+        label: label.trim(),
       });
 
       setSuccess("Exchange added successfully ✅");
@@ -33,57 +34,124 @@ export default function AddExchangePage() {
       setApiSecret("");
       setLabel("");
     } catch (err) {
-      setError(
-        err.response?.data?.message || "Failed to add exchange ❌"
-      );
+      if (err.response?.status === 409) {
+        setError("Exchange already exists ❌");
+      } else {
+        setError(
+          err.response?.data?.message || "Failed to add exchange ❌"
+        );
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-xl mx-auto bg-slate-800 p-6 rounded-xl">
-      <h2 className="text-xl font-semibold mb-4">Add Exchange</h2>
+    <div className="max-w-xl mx-auto bg-slate-800 p-6 rounded-xl shadow-lg">
+      <h2 className="text-2xl font-semibold text-white mb-1">
+        Add Exchange
+      </h2>
+      <p className="text-slate-400 mb-6">
+        Connect your exchange using API keys
+      </p>
 
-      {success && <p className="text-green-400 mb-3">{success}</p>}
-      {error && <p className="text-red-400 mb-3">{error}</p>}
+      {/* Success Message */}
+      {success && (
+        <p className="text-green-400 mb-4 font-medium">
+          {success}
+        </p>
+      )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          placeholder="Exchange Name (Binance)"
-          value={exchangeName}
-          onChange={(e) => setExchangeName(e.target.value)}
-          required
-          className="w-full p-3 rounded bg-slate-700"
-        />
+      {/* Error Message */}
+      {error && (
+        <p className="text-red-400 mb-4 font-medium">
+          {error}
+        </p>
+      )}
 
-        <input
-          placeholder="API Key"
-          value={apiKey}
-          onChange={(e) => setApiKey(e.target.value)}
-          required
-          className="w-full p-3 rounded bg-slate-700"
-        />
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-5"
+        autoComplete="off"
+      >
+        {/* Exchange Name */}
+        <div>
+          <label className="block text-sm text-slate-300 mb-1">
+            Exchange Name
+          </label>
+          <input
+            type="text"
+            name="exchange_name"
+            autoComplete="off"
+            placeholder="Binance"
+            value={exchangeName}
+            onChange={(e) => setExchangeName(e.target.value)}
+            required
+            className="w-full p-3 rounded bg-slate-700 text-white outline-none"
+          />
+        </div>
 
-        <input
-          placeholder="API Secret"
-          value={apiSecret}
-          onChange={(e) => setApiSecret(e.target.value)}
-          required
-          className="w-full p-3 rounded bg-slate-700"
-        />
+        {/* API Key */}
+        <div>
+          <label className="block text-sm text-slate-300 mb-1">
+            API Key
+          </label>
+          <input
+            type="text"
+            name="api_key"
+            autoComplete="new-password"
+            placeholder="Enter API key"
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            required
+            className="w-full p-3 rounded bg-slate-700 text-white outline-none"
+          />
+        </div>
 
-        <input
-          placeholder="Label (optional)"
-          value={label}
-          onChange={(e) => setLabel(e.target.value)}
-          className="w-full p-3 rounded bg-slate-700"
-        />
+        {/* API Secret */}
+        <div>
+          <label className="block text-sm text-slate-300 mb-1">
+            API Secret
+          </label>
+          <input
+            type="password"
+            name="api_secret"
+            autoComplete="new-password"
+            placeholder="Enter API secret"
+            value={apiSecret}
+            onChange={(e) => setApiSecret(e.target.value)}
+            required
+            className="w-full p-3 rounded bg-slate-700 text-white outline-none"
+          />
+        </div>
 
+        {/* Label */}
+        <div>
+          <label className="block text-sm text-slate-300 mb-1">
+            Label (optional)
+          </label>
+          <input
+            type="text"
+            name="label"
+            autoComplete="off"
+            placeholder="My Binance Account"
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            className="w-full p-3 rounded bg-slate-700 text-white outline-none"
+          />
+        </div>
+
+        {/* Submit Button */}
         <button
           type="submit"
           disabled={loading}
-          className="w-full bg-emerald-500 text-black py-3 rounded font-semibold"
+          className={`w-full py-3 rounded font-semibold text-black transition
+            ${
+              loading
+                ? "bg-emerald-300 cursor-not-allowed"
+                : "bg-emerald-500 hover:bg-emerald-600"
+            }
+          `}
         >
           {loading ? "Adding..." : "Add Exchange"}
         </button>

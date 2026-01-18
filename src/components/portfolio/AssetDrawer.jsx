@@ -1,222 +1,179 @@
-import { X, AlertTriangle } from "lucide-react";
 import { useEffect, useState } from "react";
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer
-} from "recharts";
-
-/* Coin symbol → full name mapping */
-const COIN_NAMES = {
-  BTC: "Bitcoin",
-  ETH: "Ethereum",
-  ADA: "Cardano",
-  SOL: "Solana",
-  DOGE: "Dogecoin"
-};
-
-const formatUSD = (value) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2
-  }).format(value);
-
-/* Generate mock chart data */
-const generateChartData = (basePrice, points, labelFn) =>
-  Array.from({ length: points }, (_, i) => ({
-    time: labelFn(i),
-    price:
-      basePrice +
-      (Math.random() - 0.5) * basePrice * 0.08
-  }));
+import { getPriceSnapshots } from "../../services/priceSnapshotService";
 
 export default function AssetDrawer({ asset, onClose }) {
-  if (!asset) return null;
+  // ✅ Hooks MUST always be on top
+  const [prices, setPrices] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const fullName = COIN_NAMES[asset.asset] || asset.asset;
-
-  const [timeframe, setTimeframe] = useState("1D");
-  const [livePrice, setLivePrice] = useState(asset.price);
-  const [change, setChange] = useState(0);
-  const [chartData, setChartData] = useState([]);
-
-  /* Initialize chart based on timeframe */
+  // 🔄 Load price snapshots when asset changes
   useEffect(() => {
-    if (timeframe === "1D") {
-      setChartData(
-        generateChartData(
-          asset.price,
-          24,
-          (i) => `${i}:00`
-        )
-      );
-    } else if (timeframe === "7D") {
-      setChartData(
-        generateChartData(
-          asset.price,
-          7,
-          (i) => `Day ${i + 1}`
-        )
-      );
-    } else if (timeframe === "1Y") {
-      const months = [
-        "Jan","Feb","Mar","Apr","May","Jun",
-        "Jul","Aug","Sep","Oct","Nov","Dec"
-      ];
-      setChartData(
-        generateChartData(
-          asset.price,
-          12,
-          (i) => months[i]
-        )
-      );
-    }
-  }, [asset, timeframe]);
+    if (!asset || !asset.assetSymbol) return;
 
-  /* Simulate live price */
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setLivePrice((prev) => {
-        const next =
-          prev + (Math.random() - 0.5) * 50;
-        setChange(
-          ((next - asset.price) / asset.price) * 100
+    const loadPrices = async () => {
+      try {
+        setLoading(true);
+        setError("");
+        setPrices([]);
+
+        console.log(
+          "📈 Fetching price snapshots for:",
+          asset.assetSymbol
         );
-        return next;
-      });
-    }, 3000);
 
-    return () => clearInterval(interval);
+        const res = await getPriceSnapshots(asset.assetSymbol);
+
+        // ✅ Backend response: { message, data }
+        const snapshotData = res?.data?.data || [];
+        setPrices(snapshotData);
+      } catch (err) {
+        console.error("❌ Price snapshot error:", err);
+
+        if (err.response?.status === 401) {
+          setError("Unauthorized. Please login again.");
+        } else {
+          setError("Failed to load price data.");
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPrices();
   }, [asset]);
 
-  return (
-    <div className="fixed inset-0 z-50 flex">
-      {/* Overlay */}
-      <div
-        className="flex-1 bg-black/50"
-        onClick={onClose}
-      />
+  // 🚪 Drawer closed → render nothing (AFTER hooks)
+  if (!asset) return null;
 
-      {/* Drawer */}
-      <div className="w-[420px] bg-[#020617] border-l border-white/5 p-6 overflow-y-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-4">
+  // 🧮 Calculations
+  const quantity = Number(asset.quantity || 0);
+  const avgCost = Number(asset.avgCost || 0);
+
+  const currentPrice =
+    prices.length > 0
+      ? Number(prices[prices.length - 1].priceUsd)
+      : null;
+
+  const investedValue = quantity * avgCost;
+  const currentValue =
+    currentPrice !== null
+      ? quantity * currentPrice
+      : null;
+
+  const profitLoss =
+    currentValue !== null
+      ? currentValue - investedValue
+      : null;
+
+  return (
+    <div className="fixed inset-0 bg-black/60 flex justify-end z-50">
+      <div className="w-full max-w-md bg-slate-900 h-full p-6 border-l border-slate-700 overflow-y-auto">
+        {/* 🔹 Header */}
+        <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold">
-            {fullName}{" "}
-            <span className="text-slate-400 text-sm">
-              ({asset.asset})
-            </span>
+            {asset.assetSymbol} Details
           </h2>
-          <button onClick={onClose}>
-            <X />
+          <button
+            onClick={onClose}
+            className="text-slate-400 hover:text-white"
+          >
+            ✕
           </button>
         </div>
 
-        {/* Asset Info */}
-        <div className="space-y-2 mb-4">
-          <p className="text-sm text-slate-400">
-            Source: {asset.exchange}
+        {/* 🔹 Asset Info */}
+        <div className="space-y-2 text-sm mb-6">
+          <p>
+            <span className="text-slate-400">Quantity:</span>{" "}
+            {quantity}
           </p>
-          <p className="text-sm">
-            Quantity: <b>{asset.qty}</b>
+          <p>
+            <span className="text-slate-400">Avg Cost:</span>{" "}
+            ${avgCost}
           </p>
-          <p className="text-sm">
-            Price:{" "}
-            <b>{formatUSD(livePrice)}</b>
-            <span
-              className={`ml-2 ${
-                change >= 0
-                  ? "text-emerald-400"
-                  : "text-red-400"
-              }`}
-            >
-              {change >= 0 ? "+" : ""}
-              {change.toFixed(2)}%
-            </span>
+          <p>
+            <span className="text-slate-400">Source:</span>{" "}
+            {asset.source || "MANUAL"}
           </p>
-          <p className="text-sm">
-            Value:{" "}
-            <b>{formatUSD(livePrice * asset.qty)}</b>
-          </p>
-          <p className="text-sm">
-            Risk:{" "}
-            <span
-              className={
-                asset.risk === "HIGH"
-                  ? "text-red-400"
-                  : asset.risk === "MEDIUM"
-                  ? "text-yellow-400"
-                  : "text-emerald-400"
-              }
-            >
-              {asset.risk}
-            </span>
-          </p>
+        </div>
 
-          {asset.risk === "HIGH" && (
-            <div className="flex items-center gap-2 text-red-400 text-sm">
-              <AlertTriangle size={16} />
-              High risk asset detected
+        <hr className="border-slate-700 my-4" />
+
+        {/* 🔹 Price Section */}
+        {loading && (
+          <p className="text-slate-400">
+            Loading price history...
+          </p>
+        )}
+
+        {!loading && error && (
+          <p className="text-red-400">{error}</p>
+        )}
+
+        {!loading && !error && prices.length === 0 && (
+          <p className="text-slate-400">
+            No price data available
+          </p>
+        )}
+
+        {!loading && !error && prices.length > 0 && (
+          <>
+            <div className="space-y-2 mb-4">
+              <p>
+                <span className="text-slate-400">
+                  Current Price:
+                </span>{" "}
+                ${currentPrice.toFixed(2)}
+              </p>
+
+              <p>
+                <span className="text-slate-400">
+                  Profit / Loss:
+                </span>{" "}
+                <span
+                  className={
+                    profitLoss >= 0
+                      ? "text-green-400"
+                      : "text-red-400"
+                  }
+                >
+                  ${profitLoss.toFixed(2)}
+                </span>
+              </p>
             </div>
-          )}
-        </div>
 
-        {/* Timeframe Tabs */}
-        <div className="flex gap-2 mb-3">
-          {["1D", "7D", "1Y"].map((tf) => (
-            <button
-              key={tf}
-              onClick={() => setTimeframe(tf)}
-              className={`px-3 py-1 rounded-lg text-sm ${
-                timeframe === tf
-                  ? "bg-emerald-500/20 text-emerald-400"
-                  : "bg-white/5 hover:bg-white/10"
-              }`}
-            >
-              {tf}
-            </button>
-          ))}
-        </div>
+            {/* 🔹 Price History */}
+            <div className="mt-4">
+              <h3 className="text-sm mb-2 text-slate-300">
+                Price History
+              </h3>
+              <ul className="text-xs space-y-1 max-h-40 overflow-y-auto">
+                {prices.map((p, i) => (
+                  <li
+                    key={i}
+                    className="flex justify-between"
+                  >
+                    <span>
+                      {new Date(
+                        p.capturedAt
+                      ).toLocaleDateString()}
+                    </span>
+                    <span>${p.priceUsd}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </>
+        )}
 
-        {/* Chart */}
-        <div className="h-[240px] bg-white/5 rounded-xl p-2">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
-              <XAxis
-                dataKey="time"
-                tick={{ fill: "#94a3b8", fontSize: 12 }}
-              />
-              <YAxis
-                tick={{ fill: "#94a3b8", fontSize: 12 }}
-                tickFormatter={(v) => `$${v.toFixed(0)}`}
-              />
-              <Tooltip
-                formatter={(v) => formatUSD(v)}
-              />
-              <Line
-                type="monotone"
-                dataKey="price"
-                stroke="#34d399"
-                strokeWidth={2}
-                dot={false}
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
-
-        {/* Alerts */}
-        <div className="mt-6">
-          <p className="text-sm font-semibold mb-1">
-            Active Alerts
-          </p>
-          <p className="text-xs text-slate-400">
-            No alerts configured
-          </p>
-        </div>
+        {/* 🔹 Footer */}
+        <button
+          onClick={onClose}
+          className="mt-6 w-full bg-red-500 hover:bg-red-600 py-2 rounded"
+        >
+          Close
+        </button>
       </div>
     </div>
   );

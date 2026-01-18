@@ -1,18 +1,17 @@
-import axios from "axios";
+import axiosInstance from "./axiosInstance";
 
-const API = "http://localhost:8081/api/portfolio";
+// POST - Refresh Exchange Holdings
+export const refreshExchangeHoldings = async () => {
+  const response = await axiosInstance.post(
+    "/api/holding/public/refresh-exchange-holdings"
+  );
+  return response.data;
+};
 
-const authHeader = () => ({
-  headers: {
-    Authorization: `Bearer ${localStorage.getItem("token")}`,
-  },
-});
-
-export const getHoldings = () =>
-  axios.get(`${API}/holdings`, authHeader());
-
-export const addHolding = (data) =>
-  axios.post(`${API}/holdings`, data, authHeader());
-
-export const deleteHolding = (id) =>
-  axios.delete(`${API}/holdings/${id}`, authHeader());
+// GET - Refresh Manual Holdings
+export const refreshManualHoldings = async () => {
+  const response = await axiosInstance.get(
+    "/api/holding/public/refresh-manual-holdings"
+  );
+  return response.data;
+};
