@@ -9,12 +9,16 @@ export default function ManualHoldingDrawer({
   const [symbol, setSymbol] = useState("");
   const [qty, setQty] = useState("");
   const [avgCost, setAvgCost] = useState("");
+  const [chain, setChain] = useState("");
+  const [address, setAddress] = useState("");
 
   useEffect(() => {
     if (asset) {
       setSymbol(asset.assetSymbol || "");
       setQty(asset.quantity || "");
       setAvgCost(asset.avgCost || "");
+      setChain(asset.chain || "");
+      setAddress(asset.address || "");
     }
   }, [asset]);
 
@@ -25,8 +29,11 @@ export default function ManualHoldingDrawer({
       assetSymbol: symbol.toUpperCase(),
       quantity: Number(qty),
       avgCost: Number(avgCost),
+      chain: chain.toUpperCase(), // ✅ uppercase
+      address, // optional
     });
-    onSaved(); // 🔥 reload from backend
+
+    onSaved();
     onClose();
   };
 
@@ -42,6 +49,20 @@ export default function ManualHoldingDrawer({
           placeholder="Asset Symbol (BTC)"
           value={symbol}
           onChange={(e) => setSymbol(e.target.value)}
+        />
+
+        <input
+          className="w-full p-2 mb-3 bg-slate-800 rounded"
+          placeholder="Chain (BINANCE / ETHEREUM)"
+          value={chain}
+          onChange={(e) => setChain(e.target.value)}
+        />
+
+        <input
+          className="w-full p-2 mb-3 bg-slate-800 rounded"
+          placeholder="Address (optional)"
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
         />
 
         <input

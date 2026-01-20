@@ -10,11 +10,21 @@ export const signUp = async (name, email, password) => {
     }
   );
 
-  // backend may or may not return token
-  const token = res?.data?.data?.token;
-  if (token) {
-    localStorage.setItem("token", token);
+  const data = res?.data?.data;
+
+  // ✅ Store token if available
+  if (data?.token) {
+    localStorage.setItem("token", data.token);
   }
+
+  // ✅ Store user profile (for Settings page)
+  localStorage.setItem(
+    "user_profile",
+    JSON.stringify({
+      name: data?.name || name,
+      email: data?.email || email,
+    })
+  );
 
   return res.data;
 };
@@ -29,18 +39,31 @@ export const login = async (email, password) => {
     }
   );
 
-  // ✅ Store token safely
-  const token = res?.data?.data?.token;
-  if (token) {
-    localStorage.setItem("token", token);
+  const data = res?.data?.data;
+
+  // ✅ Store token
+  if (data?.token) {
+    localStorage.setItem("token", data.token);
   }
+
+  // ✅ THIS IS THE IMPORTANT FIX 🔥
+  localStorage.setItem(
+    "user_profile",
+    JSON.stringify({
+      name: data?.name || data?.username || "",
+      email: data?.email || email, // fallback to login email
+    })
+  );
 
   return res.data;
 };
 
 /* ================= LOGOUT ================= */
 export const logout = () => {
+  // ✅ Clear all user-related data
   localStorage.removeItem("token");
+  localStorage.removeItem("user_profile");
+  localStorage.removeItem("address");
 };
 
 /* ================= FORGET PASSWORD ================= */
@@ -55,11 +78,11 @@ export const forgetPassword = async (email) => {
 };
 
 /* ================= RESET PASSWORD ================= */
-export const resetPassword = async (email, newPassword) => {
+export const resetPassword = async (email, newPassword, otp) => {
   const res = await api.patch(
     "/api/account/auth/public/reset-password",
     null,
-    { params: { email, newPassword } }
+    { params: { email, newPassword, otp } }
   );
 
   return res.data;

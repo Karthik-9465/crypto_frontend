@@ -1,6 +1,7 @@
 import api from "./axiosInstance";
 
-// Exchange holdings
+/* ================= EXCHANGE HOLDINGS ================= */
+// Page load / manual refresh
 export const refreshExchangeHoldings = async () => {
   const res = await api.post(
     "/api/holding/public/refresh-exchange-holdings"
@@ -8,7 +9,8 @@ export const refreshExchangeHoldings = async () => {
   return res.data; // { message, data }
 };
 
-// Manual holdings
+/* ================= MANUAL HOLDINGS ================= */
+// Page load / after add-edit-delete
 export const refreshManualHoldings = async () => {
   const res = await api.get(
     "/api/holding/public/refresh-manual-holdings"
@@ -16,11 +18,25 @@ export const refreshManualHoldings = async () => {
   return res.data;
 };
 
-// Manual add / edit
+/* ================= MANUAL ADD / EDIT ================= */
+// Used by ManualHoldingDrawer
 export const manualAddEditHolding = async (payload) => {
   const res = await api.post(
     "/api/holding/public/manual-add-edit",
     payload
+  );
+  return res.data;
+};
+
+/* ================= MANUAL DELETE ================= */
+// 🔥 IMPORTANT (paper requirement)
+// Only for MANUAL holdings
+export const deleteManualHolding = async (assetSymbol) => {
+  const res = await api.delete(
+    "/api/holding/public/delete-manual-holding",
+    {
+      params: { assetSymbol },
+    }
   );
   return res.data;
 };

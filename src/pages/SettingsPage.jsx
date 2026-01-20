@@ -1,87 +1,123 @@
 import { useEffect, useState } from "react";
 
-const STORAGE_KEY = "user_profile";
+const USER_KEY = "user_profile";   // 🔒 read-only (login controls this)
+const ADDRESS_KEY = "address";     // 🏠 optional, frontend-only
 
 export default function SettingsPage() {
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("user@email.com");
-  const [avatar, setAvatar] = useState(null);
+  const [email, setEmail] = useState("");
 
-  // Load profile from localStorage
+  const [address, setAddress] = useState("");
+  const [editingAddress, setEditingAddress] = useState(false);
+
+  /* ================= LOAD DATA ================= */
   useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const data = JSON.parse(saved);
-      setName(data.name || "");
-      setEmail(data.email || "user@email.com");
-      setAvatar(data.avatar || null);
+    // 🔹 Load user profile (DO NOT MODIFY THIS DATA)
+    const userRaw = localStorage.getItem(USER_KEY);
+    if (userRaw) {
+      try {
+        const user = JSON.parse(userRaw);
+        setName(user.name || "");
+        setEmail(user.email || "");
+      } catch (e) {
+        console.error("Invalid user_profile data");
+      }
+    }
+
+    // 🔹 Load optional address
+    const savedAddress = localStorage.getItem(ADDRESS_KEY);
+    if (savedAddress) {
+      setAddress(savedAddress);
     }
   }, []);
 
-  // Handle image upload
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = () => setAvatar(reader.result);
-    reader.readAsDataURL(file);
-  };
-
-  // Save profile
-  const saveProfile = () => {
-    const profile = { name, email, avatar };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
-    alert("Profile updated successfully");
+  /* ================= SAVE ADDRESS ONLY ================= */
+  const saveAddress = () => {
+    localStorage.setItem(ADDRESS_KEY, address);
+    setEditingAddress(false);
+    alert("Address saved successfully");
   };
 
   return (
     <div className="max-w-xl space-y-6">
-      <h1 className="text-2xl font-bold">Profile Settings</h1>
+      <h1 className="text-2xl font-bold">Profile</h1>
 
-      {/* Profile Picture */}
+      {/* ================= USERNAME ================= */}
       <div className="space-y-2">
-        <label className="text-sm text-slate-400">Profile Picture</label>
-        <div className="flex items-center gap-4">
-          <img
-            src={
-              avatar ||
-              "https://ui-avatars.com/api/?background=0D8ABC&color=fff"
-            }
-            alt="Profile"
-            className="w-20 h-20 rounded-full object-cover"
-          />
-          <input type="file" accept="image/*" onChange={handleImageUpload} />
-        </div>
-      </div>
-
-      {/* Name */}
-      <div className="space-y-2">
-        <label className="text-sm text-slate-400">Full Name</label>
+        <label className="text-sm text-slate-400">Username</label>
         <input
           value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Enter your name"
-          className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg"
+          disabled
+          className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-400 cursor-not-allowed"
         />
       </div>
 
-      {/* Email */}
+      {/* ================= EMAIL ================= */}
       <div className="space-y-2">
         <label className="text-sm text-slate-400">Email</label>
         <input
           value={email}
           disabled
-          className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-400"
+          className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-400 cursor-not-allowed"
         />
       </div>
 
-      <button
-        onClick={saveProfile}
-        className="bg-emerald-500 px-5 py-2 rounded-lg font-semibold text-black"
-      >
-        Save Changes
-      </button>
+      <hr className="border-slate-700 my-4" />
+
+      {/* ================= ADDRESS (OPTIONAL) ================= */}
+      <div className="space-y-2">
+        <label className="text-sm text-slate-400">
+          Address <span className="text-slate-500">(optional)</span>
+        </label>
+
+        {!editingAddress && (
+          <>
+            {address ? (
+              <p className="bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm">
+                {address}
+              </p>
+            ) : (
+              <p className="text-slate-500 text-sm">
+                No address added (optional)
+              </p>
+            )}
+
+            <button
+              onClick={() => setEditingAddress(true)}
+              className="mt-2 text-blue-400 hover:underline text-sm"
+            >
+              {address ? "Edit Address" : "Add Address"}
+            </button>
+          </>
+        )}
+
+        {editingAddress && (
+          <>
+            <textarea
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              rows={3}
+              placeholder="Enter your address"
+              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg"
+            />
+
+            <div className="flex gap-3 mt-2">
+              <button
+                onClick={saveAddress}
+                className="bg-emerald-500 px-4 py-2 rounded text-black font-semibold"
+              >
+                Save
+              </button>
+              <button
+                onClick={() => setEditingAddress(false)}
+                className="bg-slate-700 px-4 py-2 rounded"
+              >
+                Cancel
+              </button>
+            </div>
+          </>
+        )}
+      </div>
     </div>
   );
 }

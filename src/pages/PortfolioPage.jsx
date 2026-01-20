@@ -5,30 +5,25 @@ import AssetDrawer from "../components/portfolio/AssetDrawer";
 import {
   refreshExchangeHoldings,
   refreshManualHoldings,
+  deleteManualHolding,
 } from "../services/holdingService";
 
 export default function PortfolioPage() {
   const [exchangeHoldings, setExchangeHoldings] = useState([]);
   const [manualHoldings, setManualHoldings] = useState([]);
-
-  const [viewAsset, setViewAsset] = useState(null); // 👁 View drawer
-  const [editAsset, setEditAsset] = useState(null); // ✏️ Edit drawer
+  const [viewAsset, setViewAsset] = useState(null);
+  const [editAsset, setEditAsset] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // ================= LOAD HOLDINGS =================
   const loadHoldings = async () => {
     try {
       setLoading(true);
-
       const [exRes, manRes] = await Promise.all([
         refreshExchangeHoldings(),
         refreshManualHoldings(),
       ]);
-
       setExchangeHoldings(exRes?.data || []);
       setManualHoldings(manRes?.data || []);
-    } catch (err) {
-      console.error("Failed to load holdings", err);
     } finally {
       setLoading(false);
     }
@@ -38,49 +33,31 @@ export default function PortfolioPage() {
     loadHoldings();
   }, []);
 
-  // ================= UI-ONLY DELETE =================
-  const handleDeleteManual = (asset) => {
+  /* ✅ BACKEND DELETE + REFRESH */
+  const handleDeleteManual = async (asset) => {
     const ok = window.confirm(
-      `Are you sure you want to delete ${asset.assetSymbol}?`
+      `Delete ${asset.assetSymbol}?`
     );
-
     if (!ok) return;
 
-    // ❌ Backend call ledu (UI-only delete)
-    setManualHoldings((prev) =>
-      prev.filter(
-        (h) =>
-          !(
-            h.assetSymbol === asset.assetSymbol &&
-            h.quantity === asset.quantity &&
-            h.avgCost === asset.avgCost
-          )
-      )
-    );
+    await deleteManualHolding(asset.assetSymbol);
+    loadHoldings(); // ✅ proper refresh
   };
 
   return (
     <div className="p-8 max-w-6xl mx-auto">
-      {/* ================= Exchange Holdings ================= */}
-      <div className="bg-slate-900/70 border border-slate-700 rounded-xl p-6 mb-8">
+      {/* Exchange Holdings */}
+      <div className="bg-slate-900 p-6 mb-8 rounded">
         <h2 className="text-xl mb-4">Exchange Holdings</h2>
-
-        {loading ? (
-          <p>Loading...</p>
-        ) : exchangeHoldings.length === 0 ? (
-          <p className="text-slate-400">No exchange holdings</p>
-        ) : (
-          <HoldingsTable
-            data={exchangeHoldings}
-            onView={setViewAsset}
-            // ❌ No delete for exchange holdings
-          />
-        )}
+        <HoldingsTable
+          data={exchangeHoldings}
+          onView={setViewAsset}
+        />
       </div>
 
-      {/* ================= Manual Holdings ================= */}
-      <div className="bg-slate-900/70 border border-slate-700 rounded-xl p-6">
-        <div className="flex justify-between items-center mb-4">
+      {/* Manual Holdings */}
+      <div className="bg-slate-900 p-6 rounded">
+        <div className="flex justify-between mb-4">
           <h2 className="text-xl">Manual Holdings</h2>
           <button
             onClick={() => setEditAsset({})}
@@ -90,27 +67,21 @@ export default function PortfolioPage() {
           </button>
         </div>
 
-        {loading ? (
-          <p>Loading...</p>
-        ) : manualHoldings.length === 0 ? (
-          <p className="text-slate-400">No manual holdings</p>
-        ) : (
-          <HoldingsTable
-            data={manualHoldings}
-            onView={setViewAsset}
-            onEdit={setEditAsset}
-            onDelete={handleDeleteManual} // ✅ DELETE ENABLED
-          />
-        )}
+        <HoldingsTable
+          data={manualHoldings}
+          onView={setViewAsset}
+          onEdit={setEditAsset}
+          onDelete={handleDeleteManual}
+        />
       </div>
 
-      {/* ================= VIEW DRAWER ================= */}
-      <AssetDrawer
-        asset={viewAsset}
-        onClose={() => setViewAsset(null)}
-      />
+      {viewAsset && (
+        <AssetDrawer
+          asset={viewAsset}
+          onClose={() => setViewAsset(null)}
+        />
+      )}
 
-      {/* ================= EDIT / ADD DRAWER ================= */}
       <ManualHoldingDrawer
         asset={editAsset}
         onClose={() => setEditAsset(null)}

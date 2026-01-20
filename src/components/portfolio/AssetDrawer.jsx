@@ -1,6 +1,14 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { getPriceSnapshots } from "../../services/priceSnapshotService";
 import { fetchAssetPnL } from "../../services/pnlService";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 export default function AssetDrawer({ asset, onClose }) {
   /* ================= STATE ================= */
@@ -9,54 +17,51 @@ export default function AssetDrawer({ asset, onClose }) {
 
   const [loadingPrices, setLoadingPrices] = useState(false);
   const [loadingPnL, setLoadingPnL] = useState(false);
-
   const [error, setError] = useState("");
 
+  if (!asset) return null;
+
   /* ================= FETCH PRICE SNAPSHOTS ================= */
-  useEffect(() => {
-    if (!asset?.assetSymbol) return;
+  const fetchPrices = async () => {
+    try {
+      setLoadingPrices(true);
+      setError("");
+      setPrices([]);
 
-    const loadPrices = async () => {
-      try {
-        setLoadingPrices(true);
-        setError("");
-        setPrices([]);
+      const symbol = asset.assetSymbol.trim().toUpperCase();
 
-        const res = await getPriceSnapshots(asset.assetSymbol);
-        setPrices(res?.data?.data || []);
-      } catch (err) {
-        console.error("Price snapshot error", err);
-        setError("Failed to load price data");
-      } finally {
-        setLoadingPrices(false);
-      }
-    };
+      const res = await getPriceSnapshots(symbol);
 
-    loadPrices();
-  }, [asset]);
+      // ✅ CORRECT RESPONSE PARSING + ASCENDING SORT
+      const data = (res?.data?.data || []).sort(
+        (a, b) =>
+          new Date(a.capturedAt) - new Date(b.capturedAt)
+      );
+
+      setPrices(data);
+    } catch (err) {
+      console.error("Price snapshot error", err);
+      setError("Failed to load price data");
+      setPrices([]);
+    } finally {
+      setLoadingPrices(false);
+    }
+  };
 
   /* ================= FETCH ASSET PnL ================= */
-  useEffect(() => {
-    if (!asset?.assetSymbol) return;
-
-    const loadAssetPnL = async () => {
-      try {
-        setLoadingPnL(true);
-        const res = await fetchAssetPnL(asset.assetSymbol);
-        setAssetPnL(res?.data?.data || null);
-      } catch (err) {
-        console.warn("Asset PnL not available");
-        setAssetPnL(null); // 👈 safe fallback
-      } finally {
-        setLoadingPnL(false);
-      }
-    };
-
-    loadAssetPnL();
-  }, [asset]);
-
-  /* ================= DRAWER CLOSED ================= */
-  if (!asset) return null;
+  const fetchPnL = async () => {
+    try {
+      setLoadingPnL(true);
+      const res = await fetchAssetPnL(
+        asset.assetSymbol.trim().toUpperCase()
+      );
+      setAssetPnL(res?.data?.data || null);
+    } catch {
+      setAssetPnL(null);
+    } finally {
+      setLoadingPnL(false);
+    }
+  };
 
   /* ================= CALCULATIONS ================= */
   const quantity = Number(asset.quantity || 0);
@@ -79,7 +84,7 @@ export default function AssetDrawer({ asset, onClose }) {
     <div className="fixed inset-0 bg-black/60 flex justify-end z-50">
       <div className="w-full max-w-md bg-slate-900 h-full p-6 border-l border-slate-700 overflow-y-auto">
 
-        {/* ================= HEADER ================= */}
+        {/* HEADER */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold">
             {asset.assetSymbol} Details
@@ -92,25 +97,27 @@ export default function AssetDrawer({ asset, onClose }) {
           </button>
         </div>
 
-        {/* ================= ASSET INFO ================= */}
+        {/* ASSET INFO */}
         <div className="space-y-2 text-sm mb-6">
-          <p>
-            <span className="text-slate-400">Quantity:</span>{" "}
-            {quantity}
-          </p>
-          <p>
-            <span className="text-slate-400">Avg Cost:</span>{" "}
-            ${avgCost.toLocaleString()}
-          </p>
-          <p>
-            <span className="text-slate-400">Source:</span>{" "}
-            {asset.source || "MANUAL"}
-          </p>
+          <p><span className="text-slate-400">Quantity:</span> {quantity}</p>
+          <p><span className="text-slate-400">Avg Cost:</span> ${avgCost}</p>
+          <p><span className="text-slate-400">Source:</span> {asset.source || "MANUAL"}</p>
         </div>
 
         <hr className="border-slate-700 my-4" />
 
-        {/* ================= PRICE SECTION ================= */}
+        {/* FETCH BUTTON */}
+        <button
+          onClick={() => {
+            fetchPrices();
+            fetchPnL();
+          }}
+          className="w-full mb-4 bg-blue-600 hover:bg-blue-700 py-2 rounded"
+        >
+          Fetch Last 7 Days Prices
+        </button>
+
+        {/* PRICE STATES */}
         {loadingPrices && (
           <p className="text-slate-400">Loading price history...</p>
         )}
@@ -119,10 +126,13 @@ export default function AssetDrawer({ asset, onClose }) {
           <p className="text-red-400">{error}</p>
         )}
 
-        {!loadingPrices && !error && prices.length === 0 && (
-          <p className="text-slate-400">No price data available</p>
+        {!loadingPrices && prices.length === 0 && !error && (
+          <p className="text-slate-400">
+            Click fetch to load price data
+          </p>
         )}
 
+        {/* PRICE + GRAPH */}
         {!loadingPrices && prices.length > 0 && (
           <>
             <div className="space-y-2 mb-4">
@@ -145,13 +155,40 @@ export default function AssetDrawer({ asset, onClose }) {
               </p>
             </div>
 
-            {/* ================= PRICE HISTORY ================= */}
+            {/* GRAPH */}
+            <div className="h-48 mb-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={prices}>
+                  <XAxis
+                    dataKey="capturedAt"
+                    tickFormatter={(v) =>
+                      new Date(v).toLocaleDateString()
+                    }
+                  />
+                  <YAxis />
+                  <Tooltip
+                    labelFormatter={(v) =>
+                      new Date(v).toLocaleDateString()
+                    }
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="priceUsd"
+                    stroke="#3b82f6"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* PRICE HISTORY LIST */}
             <div className="mt-4">
               <h3 className="text-sm mb-2 text-slate-300">
                 Price History
               </h3>
 
-              <ul className="text-xs space-y-1 max-h-40 overflow-y-auto">
+              <ul className="text-xs space-y-1 max-h-32 overflow-y-auto">
                 {prices.map((p, i) => (
                   <li key={i} className="flex justify-between">
                     <span>
@@ -165,7 +202,7 @@ export default function AssetDrawer({ asset, onClose }) {
           </>
         )}
 
-        {/* ================= ASSET PnL SECTION ================= */}
+        {/* ASSET PNL */}
         <hr className="border-slate-700 my-4" />
 
         <h3 className="text-sm mb-2 text-slate-300">
@@ -178,16 +215,8 @@ export default function AssetDrawer({ asset, onClose }) {
 
         {!loadingPnL && assetPnL && (
           <div className="space-y-2 text-sm">
-            <p>
-              <span className="text-slate-400">Invested:</span>{" "}
-              ${assetPnL.invested.toFixed(2)}
-            </p>
-
-            <p>
-              <span className="text-slate-400">Current Value:</span>{" "}
-              ${assetPnL.currentValue.toFixed(2)}
-            </p>
-
+            <p><span className="text-slate-400">Invested:</span> ${assetPnL.invested.toFixed(2)}</p>
+            <p><span className="text-slate-400">Current Value:</span> ${assetPnL.currentValue.toFixed(2)}</p>
             <p>
               <span className="text-slate-400">Unrealized P&L:</span>{" "}
               <span
@@ -209,7 +238,7 @@ export default function AssetDrawer({ asset, onClose }) {
           </p>
         )}
 
-        {/* ================= FOOTER ================= */}
+        {/* FOOTER */}
         <button
           onClick={onClose}
           className="mt-6 w-full bg-red-500 hover:bg-red-600 py-2 rounded"

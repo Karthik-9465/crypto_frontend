@@ -1,37 +1,46 @@
 import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { resetPassword } from "../services/authService";
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
-  const location = useLocation();
 
-  // email passed from forgot page
-  const email = location.state?.email;
+  // ✅ fallback from localStorage
+  const email = localStorage.getItem("resetEmail");
 
-  const [newPassword, setNewPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   if (!email) {
     return (
-      <p className="p-8 text-red-400">
-        Invalid reset flow. Please try again.
+      <p className="p-8 text-center text-red-400">
+        Invalid access. Please retry forgot password.
       </p>
     );
   }
 
-  const handleReset = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    setLoading(true);
+
+    if (password !== confirm) {
+      setError("Passwords do not match");
+      return;
+    }
 
     try {
-      await resetPassword(email, newPassword);
-      alert("Password changed successfully");
+      setLoading(true);
+
+      // backend currently checks only email + password
+      await resetPassword(email, password);
+
+      localStorage.removeItem("resetEmail");
       navigate("/login");
     } catch (err) {
-      setError("Failed to reset password");
+      setError("Invalid OTP or reset failed");
     } finally {
       setLoading(false);
     }
@@ -40,32 +49,48 @@ export default function ResetPasswordPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-900">
       <div className="bg-slate-800 p-8 rounded-xl w-full max-w-md">
-        <h2 className="text-2xl font-bold text-white text-center mb-6">
+        <h2 className="text-2xl font-bold text-center mb-6">
           Reset Password
         </h2>
 
         {error && (
-          <p className="text-red-500 text-sm mb-4 text-center">
+          <p className="text-red-400 text-center mb-4">
             {error}
           </p>
         )}
 
-        <form onSubmit={handleReset} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input
+            placeholder="Enter OTP"
+            value={otp}
+            onChange={(e) => setOtp(e.target.value)}
+            required
+            className="w-full p-3 rounded bg-slate-700 text-white"
+          />
+
           <input
             type="password"
-            placeholder="New Password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
+            placeholder="New password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             required
-            className="w-full p-3 rounded bg-slate-700 text-white outline-none"
+            className="w-full p-3 rounded bg-slate-700 text-white"
+          />
+
+          <input
+            type="password"
+            placeholder="Confirm password"
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
+            required
+            className="w-full p-3 rounded bg-slate-700 text-white"
           />
 
           <button
-            type="submit"
             disabled={loading}
-            className="w-full bg-emerald-500 hover:bg-emerald-600 text-black font-semibold py-3 rounded"
+            className="w-full bg-emerald-500 py-3 rounded font-semibold disabled:opacity-50"
           >
-            {loading ? "Updating..." : "Update Password"}
+            {loading ? "Resetting..." : "Reset Password"}
           </button>
         </form>
       </div>
