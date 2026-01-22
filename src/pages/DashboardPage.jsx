@@ -362,7 +362,7 @@ export default function DashboardPage() {
       `}</style>
 
       <div className="dashboard-container">
-        {/* Dashboard Header */}
+        Dashboard Header
         <div className="dashboard-header">
           <h1 className="dashboard-title">Dashboard</h1>
           <p className="dashboard-subtitle">Overview of portfolio performance and risk</p>

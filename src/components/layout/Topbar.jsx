@@ -1,7 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
+import NotificationBell from "../ui/NotificationBell";
 
 export default function Topbar() {
   const navigate = useNavigate();
+   
 
   // Load profile data
   const profile =
@@ -210,6 +212,7 @@ export default function Topbar() {
               {profile.name || "User"}
             </span>
           </div>
+           <NotificationBell />
 
           {/* Settings */}
           <Link to="/settings" className="settings-btn">
