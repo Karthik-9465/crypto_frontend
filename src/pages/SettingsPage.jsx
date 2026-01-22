@@ -1,123 +1,288 @@
 import { useEffect, useState } from "react";
 
-const USER_KEY = "user_profile";   // 🔒 read-only (login controls this)
-const ADDRESS_KEY = "address";     // 🏠 optional, frontend-only
+const USER_KEY = "user_profile";
 
 export default function SettingsPage() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [user, setUser] = useState({
+    name: "",
+    email: "",
+    address: "",
+  });
+  const [message, setMessage] = useState("");
 
-  const [address, setAddress] = useState("");
-  const [editingAddress, setEditingAddress] = useState(false);
-
-  /* ================= LOAD DATA ================= */
+  // Load user data from localStorage
   useEffect(() => {
-    // 🔹 Load user profile (DO NOT MODIFY THIS DATA)
-    const userRaw = localStorage.getItem(USER_KEY);
-    if (userRaw) {
+    const savedUser = localStorage.getItem(USER_KEY);
+    if (savedUser) {
       try {
-        const user = JSON.parse(userRaw);
-        setName(user.name || "");
-        setEmail(user.email || "");
-      } catch (e) {
+        setUser(JSON.parse(savedUser));
+      } catch (err) {
         console.error("Invalid user_profile data");
       }
     }
-
-    // 🔹 Load optional address
-    const savedAddress = localStorage.getItem(ADDRESS_KEY);
-    if (savedAddress) {
-      setAddress(savedAddress);
-    }
   }, []);
 
-  /* ================= SAVE ADDRESS ONLY ================= */
-  const saveAddress = () => {
-    localStorage.setItem(ADDRESS_KEY, address);
-    setEditingAddress(false);
-    alert("Address saved successfully");
+  // Save profile
+  const saveProfile = () => {
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    setMessage("Profile saved successfully ✅");
+    setTimeout(() => {
+      setMessage("");
+    }, 2000);
   };
 
   return (
-    <div className="max-w-xl space-y-6">
-      <h1 className="text-2xl font-bold">Profile</h1>
+    <>
+      <style>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0) translateX(0); }
+          50% { transform: translateY(-30px) translateX(20px); }
+        }
 
-      {/* ================= USERNAME ================= */}
-      <div className="space-y-2">
-        <label className="text-sm text-slate-400">Username</label>
-        <input
-          value={name}
-          disabled
-          className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-400 cursor-not-allowed"
-        />
-      </div>
+        @keyframes slideIn {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
 
-      {/* ================= EMAIL ================= */}
-      <div className="space-y-2">
-        <label className="text-sm text-slate-400">Email</label>
-        <input
-          value={email}
-          disabled
-          className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-400 cursor-not-allowed"
-        />
-      </div>
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
 
-      <hr className="border-slate-700 my-4" />
+        body {
+          background: linear-gradient(135deg, #4169e1 0%, #1e3a8a 100%);
+          min-height: 100vh;
+          position: relative;
+          overflow-x: hidden;
+        }
 
-      {/* ================= ADDRESS (OPTIONAL) ================= */}
-      <div className="space-y-2">
-        <label className="text-sm text-slate-400">
-          Address <span className="text-slate-500">(optional)</span>
-        </label>
+        body::before, body::after {
+          content: '';
+          position: fixed;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          pointer-events: none;
+          z-index: 0;
+        }
 
-        {!editingAddress && (
-          <>
-            {address ? (
-              <p className="bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm">
-                {address}
-              </p>
-            ) : (
-              <p className="text-slate-500 text-sm">
-                No address added (optional)
-              </p>
-            )}
+        body::before {
+          width: 500px;
+          height: 500px;
+          top: -150px;
+          left: -150px;
+          animation: float 20s infinite ease-in-out;
+        }
 
-            <button
-              onClick={() => setEditingAddress(true)}
-              className="mt-2 text-blue-400 hover:underline text-sm"
-            >
-              {address ? "Edit Address" : "Add Address"}
-            </button>
-          </>
-        )}
+        body::after {
+          width: 400px;
+          height: 400px;
+          bottom: -100px;
+          right: -100px;
+          animation: float 15s infinite ease-in-out reverse;
+        }
 
-        {editingAddress && (
-          <>
-            <textarea
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              rows={3}
-              placeholder="Enter your address"
-              className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-lg"
+        .settings-container {
+          padding: 3rem 2rem;
+          max-width: 40rem;
+          margin: 0 auto;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          position: relative;
+          z-index: 1;
+          animation: slideIn 0.5s ease-out;
+        }
+
+        .settings-card {
+          background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 20px;
+          padding: 2.5rem;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5),
+                      0 0 40px rgba(65, 105, 225, 0.1);
+        }
+
+        .settings-header {
+          margin-bottom: 2rem;
+          padding-bottom: 1.5rem;
+          border-bottom: 2px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .settings-title {
+          font-size: 2rem;
+          font-weight: 700;
+          color: #ffffff;
+          margin-bottom: 0.5rem;
+          letter-spacing: -0.5px;
+        }
+
+        .settings-subtitle {
+          color: #94a3b8;
+          font-size: 0.95rem;
+        }
+
+        .form-group {
+          margin-bottom: 1.75rem;
+        }
+
+        .form-label {
+          display: block;
+          font-size: 0.875rem;
+          font-weight: 500;
+          color: #cbd5e1;
+          margin-bottom: 0.5rem;
+          letter-spacing: 0.3px;
+        }
+
+        .optional-tag {
+          color: #64748b;
+          font-weight: 400;
+        }
+
+        .form-input,
+        .form-textarea {
+          width: 100%;
+          padding: 0.875rem 1rem;
+          background: rgba(15, 23, 42, 0.6);
+          border: 2px solid #334155;
+          border-radius: 12px;
+          color: #ffffff;
+          font-size: 0.95rem;
+          outline: none;
+          transition: all 0.3s ease;
+          font-family: inherit;
+        }
+
+        .form-input::placeholder,
+        .form-textarea::placeholder {
+          color: #475569;
+        }
+
+        .form-input:focus,
+        .form-textarea:focus {
+          border-color: #3b82f6;
+          background: rgba(15, 23, 42, 0.9);
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-textarea {
+          resize: vertical;
+          min-height: 100px;
+        }
+
+        .save-button {
+          width: 100%;
+          padding: 1rem;
+          background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+          border: none;
+          border-radius: 12px;
+          color: #ffffff;
+          font-weight: 700;
+          font-size: 1rem;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          margin-top: 0.5rem;
+          box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+        }
+
+        .save-button:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 25px rgba(139, 92, 246, 0.4);
+        }
+
+        .success-message {
+          margin-top: 1.25rem;
+          padding: 1rem 1.25rem;
+          background: rgba(34, 197, 94, 0.15);
+          border: 1px solid rgba(34, 197, 94, 0.3);
+          border-radius: 12px;
+          color: #34d399;
+          text-align: center;
+          font-weight: 600;
+          font-size: 0.95rem;
+          animation: fadeIn 0.3s ease-out;
+        }
+
+        @media (max-width: 640px) {
+          .settings-container {
+            padding: 2rem 1rem;
+          }
+
+          .settings-card {
+            padding: 2rem 1.5rem;
+          }
+
+          .settings-title {
+            font-size: 1.75rem;
+          }
+
+          body::before, body::after {
+            display: none;
+          }
+        }
+      `}</style>
+
+      <div className="settings-container">
+        <div className="settings-card">
+          <div className="settings-header">
+            <h1 className="settings-title">Profile Settings</h1>
+            <p className="settings-subtitle">Manage your account information</p>
+          </div>
+
+          {/* USERNAME */}
+          <div className="form-group">
+            <label className="form-label">Username</label>
+            <input
+              type="text"
+              value={user.name}
+              onChange={(e) =>
+                setUser({ ...user, name: e.target.value })
+              }
+              className="form-input"
+              placeholder="Enter username"
             />
+          </div>
 
-            <div className="flex gap-3 mt-2">
-              <button
-                onClick={saveAddress}
-                className="bg-emerald-500 px-4 py-2 rounded text-black font-semibold"
-              >
-                Save
-              </button>
-              <button
-                onClick={() => setEditingAddress(false)}
-                className="bg-slate-700 px-4 py-2 rounded"
-              >
-                Cancel
-              </button>
-            </div>
-          </>
-        )}
+          {/* EMAIL */}
+          <div className="form-group">
+            <label className="form-label">Email</label>
+            <input
+              type="email"
+              value={user.email}
+              onChange={(e) =>
+                setUser({ ...user, email: e.target.value })
+              }
+              className="form-input"
+              placeholder="Enter email"
+            />
+          </div>
+
+          {/* ADDRESS */}
+          <div className="form-group">
+            <label className="form-label">
+              Address <span className="optional-tag">(optional)</span>
+            </label>
+            <textarea
+              rows={3}
+              value={user.address}
+              onChange={(e) =>
+                setUser({ ...user, address: e.target.value })
+              }
+              className="form-textarea"
+              placeholder="Enter your address"
+            />
+          </div>
+
+          {/* SAVE BUTTON */}
+          <button onClick={saveProfile} className="save-button">
+            Save Profile
+          </button>
+
+          {/* SUCCESS MESSAGE */}
+          {message && <div className="success-message">{message}</div>}
+        </div>
       </div>
-    </div>
+    </>
   );
 }
