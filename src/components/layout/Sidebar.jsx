@@ -6,105 +6,254 @@ import {
   FileText,
   Settings,
   PlusCircle,
-  ArrowLeftRight, // 🔄 Trades icon
+  ArrowLeftRight,
 } from "lucide-react";
-
-const linkBase =
-  "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all";
-
-const activeClass =
-  "bg-emerald-500/20 text-emerald-400 shadow-inner";
-
-const inactiveClass =
-  "text-slate-300 hover:bg-white/5 hover:text-white";
 
 export default function Sidebar() {
   return (
-    <aside className="w-64 h-screen bg-[#020617] text-slate-100 p-6 flex flex-col border-r border-white/5">
-      {/* Logo */}
-      <h1 className="text-2xl font-bold mb-8">
-        Crypto<span className="text-emerald-400">Guard</span>
-      </h1>
-
-      {/* Navigation */}
-      <nav className="space-y-2">
-        <NavLink
-          to="/"
-          end
-          className={({ isActive }) =>
-            `${linkBase} ${isActive ? activeClass : inactiveClass}`
+    <>
+      <style>{`
+        @keyframes slideInLeft {
+          from {
+            transform: translateX(-20px);
+            opacity: 0;
           }
-        >
-          <LayoutDashboard size={18} />
-          Dashboard
-        </NavLink>
-
-        <NavLink
-          to="/portfolio"
-          className={({ isActive }) =>
-            `${linkBase} ${isActive ? activeClass : inactiveClass}`
+          to {
+            transform: translateX(0);
+            opacity: 1;
           }
-        >
-          <Wallet size={18} />
-          Portfolio
-        </NavLink>
+        }
 
-        {/* 🔄 Trades */}
-        <NavLink
-          to="/trades"
-          className={({ isActive }) =>
-            `${linkBase} ${isActive ? activeClass : inactiveClass}`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        .sidebar-container {
+          width: 16rem;
+          height: 100vh;
+          background: linear-gradient(180deg, #0a0e27 0%, #020617 100%);
+          color: #f1f5f9;
+          padding: 2rem 1.5rem;
+          display: flex;
+          flex-direction: column;
+          border-right: 1px solid rgba(255, 255, 255, 0.05);
+          animation: slideInLeft 0.5s ease-out;
+          box-shadow: 4px 0 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .sidebar-logo {
+          font-size: 1.75rem;
+          font-weight: 800;
+          margin-bottom: 2.5rem;
+          letter-spacing: -0.5px;
+          animation: fadeIn 0.6s ease-out;
+          padding-bottom: 1.5rem;
+          border-bottom: 2px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .logo-highlight {
+          background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        .sidebar-nav {
+          display: flex;
+          flex-direction: column;
+          gap: 0.5rem;
+          animation: fadeIn 0.8s ease-out;
+        }
+
+        .nav-link {
+          display: flex;
+          align-items: center;
+          gap: 0.875rem;
+          padding: 0.875rem 1rem;
+          border-radius: 12px;
+          font-size: 0.9rem;
+          font-weight: 600;
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          position: relative;
+          overflow: hidden;
+        }
+
+        .nav-link::before {
+          content: '';
+          position: absolute;
+          left: 0;
+          top: 0;
+          height: 100%;
+          width: 3px;
+          background: linear-gradient(180deg, #10b981 0%, #34d399 100%);
+          transform: scaleY(0);
+          transition: transform 0.3s ease;
+        }
+
+        .nav-link-active {
+          background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.05) 100%);
+          color: #34d399;
+          box-shadow: 0 4px 15px rgba(16, 185, 129, 0.1),
+                      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+          transform: translateX(4px);
+        }
+
+        .nav-link-active::before {
+          transform: scaleY(1);
+        }
+
+        .nav-link-inactive {
+          color: #cbd5e1;
+        }
+
+        .nav-link-inactive:hover {
+          background: rgba(255, 255, 255, 0.05);
+          color: #ffffff;
+          transform: translateX(4px);
+        }
+
+        .nav-icon {
+          transition: transform 0.3s ease;
+        }
+
+        .nav-link:hover .nav-icon {
+          transform: scale(1.1);
+        }
+
+        .nav-link-active .nav-icon {
+          filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.5));
+        }
+
+        .sidebar-footer {
+          margin-top: auto;
+          padding-top: 2rem;
+          font-size: 0.75rem;
+          color: #64748b;
+          text-align: center;
+          border-top: 1px solid rgba(255, 255, 255, 0.05);
+          animation: fadeIn 1s ease-out;
+        }
+
+        @media (max-width: 1024px) {
+          .sidebar-container {
+            width: 5rem;
+            padding: 1.5rem 0.75rem;
           }
-        >
-          <ArrowLeftRight size={18} />
-          Trades
-        </NavLink>
 
-        <NavLink
-          to="/add-exchange"
-          className={({ isActive }) =>
-            `${linkBase} ${isActive ? activeClass : inactiveClass}`
+          .sidebar-logo {
+            font-size: 1rem;
+            text-align: center;
           }
-        >
-          <PlusCircle size={18} />
-          Add Exchange
-        </NavLink>
 
-        <NavLink
-          to="/alerts"
-          className={({ isActive }) =>
-            `${linkBase} ${isActive ? activeClass : inactiveClass}`
+          .logo-highlight {
+            display: none;
           }
-        >
-          <ShieldAlert size={18} />
-          Risk & Alerts
-        </NavLink>
 
-        <NavLink
-          to="/reports"
-          className={({ isActive }) =>
-            `${linkBase} ${isActive ? activeClass : inactiveClass}`
+          .nav-link {
+            flex-direction: column;
+            gap: 0.25rem;
+            padding: 0.75rem 0.5rem;
+            font-size: 0.7rem;
           }
-        >
-          <FileText size={18} />
-          Reports
-        </NavLink>
 
-        <NavLink
-          to="/settings"
-          className={({ isActive }) =>
-            `${linkBase} ${isActive ? activeClass : inactiveClass}`
+          .sidebar-footer {
+            font-size: 0.6rem;
           }
-        >
-          <Settings size={18} />
-          Settings
-        </NavLink>
-      </nav>
+        }
 
-      {/* Footer */}
-      <div className="mt-auto text-xs text-slate-500 pt-6">
-        {/* v1.0 • Local Demo */}
-      </div>
-    </aside>
+        @media (max-width: 768px) {
+          .sidebar-container {
+            display: none;
+          }
+        }
+      `}</style>
+
+      <aside className="sidebar-container">
+        {/* Logo */}
+        <h1 className="sidebar-logo">
+          Crypto<span className="logo-highlight">Guard</span>
+        </h1>
+
+        {/* Navigation */}
+        <nav className="sidebar-nav">
+          <NavLink
+            to="/"
+            end
+            className={({ isActive }) =>
+              `nav-link ${isActive ? 'nav-link-active' : 'nav-link-inactive'}`
+            }
+          >
+            <LayoutDashboard size={18} className="nav-icon" />
+            Dashboard
+          </NavLink>
+
+          <NavLink
+            to="/portfolio"
+            className={({ isActive }) =>
+              `nav-link ${isActive ? 'nav-link-active' : 'nav-link-inactive'}`
+            }
+          >
+            <Wallet size={18} className="nav-icon" />
+            Portfolio
+          </NavLink>
+
+          <NavLink
+            to="/trades"
+            className={({ isActive }) =>
+              `nav-link ${isActive ? 'nav-link-active' : 'nav-link-inactive'}`
+            }
+          >
+            <ArrowLeftRight size={18} className="nav-icon" />
+            Trades
+          </NavLink>
+
+          <NavLink
+            to="/add-exchange"
+            className={({ isActive }) =>
+              `nav-link ${isActive ? 'nav-link-active' : 'nav-link-inactive'}`
+            }
+          >
+            <PlusCircle size={18} className="nav-icon" />
+            Add Exchange
+          </NavLink>
+
+          <NavLink
+            to="/alerts"
+            className={({ isActive }) =>
+              `nav-link ${isActive ? 'nav-link-active' : 'nav-link-inactive'}`
+            }
+          >
+            <ShieldAlert size={18} className="nav-icon" />
+            Risk & Alerts
+          </NavLink>
+
+          <NavLink
+            to="/reports"
+            className={({ isActive }) =>
+              `nav-link ${isActive ? 'nav-link-active' : 'nav-link-inactive'}`
+            }
+          >
+            <FileText size={18} className="nav-icon" />
+            Reports
+          </NavLink>
+
+          <NavLink
+            to="/settings"
+            className={({ isActive }) =>
+              `nav-link ${isActive ? 'nav-link-active' : 'nav-link-inactive'}`
+            }
+          >
+            <Settings size={18} className="nav-icon" />
+            Settings
+          </NavLink>
+        </nav>
+
+        {/* Footer */}
+        <div className="sidebar-footer">
+          v1.0 • Crypto Portfolio Tracker
+        </div>
+      </aside>
+    </>
   );
 }

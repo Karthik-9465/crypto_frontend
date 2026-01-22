@@ -143,51 +143,272 @@ export default function DashboardPage() {
   };
 
   if (loading) {
-    return <p className="p-8 text-slate-400">Loading dashboard…</p>;
+    return (
+      <>
+        <style>{`
+          @keyframes float {
+            0%, 100% { transform: translateY(0) translateX(0); }
+            50% { transform: translateY(-30px) translateX(20px); }
+          }
+
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
+
+          body {
+            background: linear-gradient(135deg, #4169e1 0%, #1e3a8a 100%);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+          }
+
+          body::before, body::after {
+            content: '';
+            position: fixed;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            pointer-events: none;
+            z-index: 0;
+          }
+
+          body::before {
+            width: 500px;
+            height: 500px;
+            top: -150px;
+            left: -150px;
+            animation: float 20s infinite ease-in-out;
+          }
+
+          body::after {
+            width: 400px;
+            height: 400px;
+            bottom: -100px;
+            right: -100px;
+            animation: float 15s infinite ease-in-out reverse;
+          }
+
+          .loading-container {
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 70vh;
+            position: relative;
+            z-index: 1;
+          }
+
+          .spinner {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 1.5rem;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: #10b981;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+          }
+
+          .loading-text {
+            color: #ffffff;
+            font-size: 1.125rem;
+            font-weight: 500;
+          }
+        `}</style>
+        <div className="loading-container">
+          <div className="spinner"></div>
+          <p className="loading-text">Loading dashboard...</p>
+        </div>
+      </>
+    );
   }
 
   return (
-    <div className="space-y-8">
-      {/* ================= STAT CARDS ================= */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
-          title="Total Portfolio Value"
-          value={`$${totalValue.toFixed(2)}`}
-          sub={`Across ${exchangeCount} exchange(s)`}
-          highlight
-        />
+    <>
+      <style>{`
+        @keyframes float {
+          0%, 100% { transform: translateY(0) translateX(0); }
+          50% { transform: translateY(-30px) translateX(20px); }
+        }
 
-        <StatCard
-          title="24h P&L"
-          value={`${pnl24h.value >= 0 ? "+" : ""}$${pnl24h.value.toFixed(
-            2
-          )} (${pnl24h.percent.toFixed(2)}%)`}
-          sub="Since yesterday"
-        />
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(15px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
 
-        <StatCard
-          title="Open Risk Alerts"
-          value={riskCounts.high + riskCounts.medium}
-          sub={`${riskCounts.high} high · ${riskCounts.medium} medium`}
-        />
+        body {
+          background: linear-gradient(135deg, #4169e1 0%, #1e3a8a 100%);
+          min-height: 100vh;
+          position: relative;
+          overflow-x: hidden;
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+            'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+            sans-serif;
+        }
 
-        <StatCard
-          title="Tax Reports"
-          value={taxStatus === "—" ? "Not Ready" : "Ready"}
-          sub="Based on realized P&L"
-        />
+        body::before, body::after {
+          content: '';
+          position: fixed;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.05);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          pointer-events: none;
+          z-index: 0;
+        }
+
+        body::before {
+          width: 500px;
+          height: 500px;
+          top: -150px;
+          left: -150px;
+          animation: float 20s infinite ease-in-out;
+        }
+
+        body::after {
+          width: 400px;
+          height: 400px;
+          bottom: -100px;
+          right: -100px;
+          animation: float 15s infinite ease-in-out reverse;
+        }
+
+        .dashboard-container {
+          position: relative;
+          z-index: 1;
+          padding: 2.5rem 2rem;
+          max-width: 90rem;
+          margin: 0 auto;
+        }
+
+        .dashboard-header {
+          margin-bottom: 2rem;
+          padding-bottom: 1.5rem;
+          border-bottom: 2px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .dashboard-title {
+          font-size: 2rem;
+          font-weight: 800;
+          color: #ffffff;
+          letter-spacing: -0.5px;
+          margin-bottom: 0.5rem;
+        }
+
+        .dashboard-subtitle {
+          color: rgba(255, 255, 255, 0.6);
+          font-size: 1rem;
+        }
+
+        .stats-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+          gap: 1.5rem;
+          margin-bottom: 2rem;
+          animation: fadeIn 0.5s ease-out;
+        }
+
+        .content-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1.5rem;
+          margin-bottom: 2rem;
+          animation: fadeIn 0.6s ease-out;
+        }
+
+        .chart-section {
+          width: 100%;
+          animation: fadeIn 0.7s ease-out;
+        }
+
+        @media (max-width: 1024px) {
+          .content-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+
+        @media (max-width: 768px) {
+          .dashboard-container {
+            padding: 2rem 1.5rem;
+          }
+
+          .dashboard-title {
+            font-size: 1.75rem;
+          }
+
+          .stats-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+          }
+
+          .content-grid {
+            gap: 1rem;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .dashboard-container {
+            padding: 1.5rem 1rem;
+          }
+
+          .dashboard-title {
+            font-size: 1.5rem;
+          }
+          
+          body::before,
+          body::after {
+            display: none;
+          }
+        }
+      `}</style>
+
+      <div className="dashboard-container">
+        {/* Dashboard Header */}
+        <div className="dashboard-header">
+          <h1 className="dashboard-title">Dashboard</h1>
+          <p className="dashboard-subtitle">Overview of portfolio performance and risk</p>
+        </div>
+
+        {/* ================= STAT CARDS ================= */}
+        <div className="stats-grid">
+          <StatCard
+            title="Total Portfolio Value"
+            value={`$${totalValue.toFixed(2)}`}
+            sub={`Across ${exchangeCount} exchange(s)`}
+            highlight
+          />
+
+          <StatCard
+            title="24h P&L"
+            value={`${pnl24h.value >= 0 ? "+" : ""}$${pnl24h.value.toFixed(
+              2
+            )} (${pnl24h.percent.toFixed(2)}%)`}
+            sub="Since yesterday"
+          />
+
+          <StatCard
+            title="Open Risk Alerts"
+            value={riskCounts.high + riskCounts.medium}
+            sub={`${riskCounts.high} high · ${riskCounts.medium} medium`}
+          />
+
+          <StatCard
+            title="Tax Reports"
+            value={taxStatus === "—" ? "Not Ready" : "Ready"}
+            sub="Based on realized P&L"
+          />
+        </div>
+
+        {/* ================= ACTIONS + ALERTS ================= */}
+        <div className="content-grid">
+          <QuickActions />
+          <CriticalAlertsPreview />
+        </div>
+
+        {/* ================= PORTFOLIO CHART ================= */}
+        <div className="chart-section">
+          <PortfolioValueChart />
+        </div>
       </div>
-
-      {/* ================= ACTIONS + ALERTS ================= */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <QuickActions />
-        <CriticalAlertsPreview />
-      </div>
-
-      {/* ================= PORTFOLIO CHART ================= */}
-      <div className="grid grid-cols-1">
-        <PortfolioValueChart />
-      </div>
-    </div>
+    </>
   );
 }
