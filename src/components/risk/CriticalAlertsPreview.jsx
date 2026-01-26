@@ -33,7 +33,7 @@ export default function CriticalAlertsPreview() {
       <div className="space-y-3">
         {alerts.length === 0 && (
           <p className="text-sm text-slate-400">
-            No critical risks detected 🎉
+            No critical risks detected
           </p>
         )}
 

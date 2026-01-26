@@ -24,12 +24,19 @@ export default function SettingsPage() {
 
   // Save profile
   const saveProfile = () => {
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
-    setMessage("Profile saved successfully ✅");
-    setTimeout(() => {
-      setMessage("");
-    }, 2000);
+  const savedUser = localStorage.getItem(USER_KEY);
+  if (!savedUser) return;
+
+  const parsed = JSON.parse(savedUser);
+
+  const updatedUser = {
+    ...parsed,
+    address: user.address, // ✅ only address update
   };
+
+  localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+  setMessage("Profile updated successfully ✅");
+};
 
   return (
     <>
@@ -92,6 +99,11 @@ export default function SettingsPage() {
         .form-group {
           margin-bottom: 1.75rem;
         }
+          .form-input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 
         .form-label {
           display: block;
@@ -198,29 +210,27 @@ export default function SettingsPage() {
           {/* USERNAME */}
           <div className="form-group">
             <label className="form-label">Username</label>
-            <input
-              type="text"
-              value={user.name}
-              onChange={(e) =>
-                setUser({ ...user, name: e.target.value })
-              }
-              className="form-input"
-              placeholder="Enter username"
-            />
+           <input
+  type="text"
+  value={user.name}
+  disabled
+  readOnly
+  className="form-input"
+/>
+
           </div>
 
           {/* EMAIL */}
           <div className="form-group">
             <label className="form-label">Email</label>
-            <input
-              type="email"
-              value={user.email}
-              onChange={(e) =>
-                setUser({ ...user, email: e.target.value })
-              }
-              className="form-input"
-              placeholder="Enter email"
-            />
+           <input
+            type="email"
+            value={user.email}
+            disabled
+            readOnly
+            className="form-input"
+/>
+
           </div>
 
           {/* ADDRESS */}

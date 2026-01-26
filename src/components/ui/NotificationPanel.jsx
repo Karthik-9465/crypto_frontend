@@ -1,12 +1,12 @@
 import { createPortal } from "react-dom";
 import { useNotifications } from "../../context/NotificationContext";
 
-export default function NotificationPanel() {
-  const { notifications, markAsRead, clearAll } = useNotifications();
+export default function NotificationPanel({ onClose }) {
+  const { notifications, markAsRead, markAsReadAll } = useNotifications();
 
-  const getColor = (title) => {
+  const getColor = (title = "") => {
     const t = title.toLowerCase();
-    if (t.includes("high")) return "#f87171";   // 🔴 High
+    if (t.includes("high")) return "#f87171";    // 🔴 High
     if (t.includes("medium")) return "#facc15"; // 🟡 Medium
     return "#34d399";                            // 🟢 Low
   };
@@ -15,14 +15,8 @@ export default function NotificationPanel() {
     <>
       <style>{`
         @keyframes slideInDown {
-          from {
-            opacity: 0;
-            transform: translateY(-20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+          from { opacity: 0; transform: translateY(-20px); }
+          to { opacity: 1; transform: translateY(0); }
         }
 
         @keyframes fadeIn {
@@ -45,7 +39,7 @@ export default function NotificationPanel() {
           display: flex;
           flex-direction: column;
           overflow: hidden;
-          animation: slideInDown 0.3s ease-out;
+          animation: slideInDown 0.25s ease-out;
         }
 
         .notification-header {
@@ -54,7 +48,6 @@ export default function NotificationPanel() {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          flex-shrink: 0;
           background: rgba(15, 23, 42, 0.6);
         }
 
@@ -62,7 +55,6 @@ export default function NotificationPanel() {
           font-weight: 700;
           font-size: 1rem;
           color: #ffffff;
-          letter-spacing: -0.3px;
         }
 
         .clear-button {
@@ -74,14 +66,12 @@ export default function NotificationPanel() {
           border-radius: 8px;
           padding: 0.375rem 0.875rem;
           cursor: pointer;
-          transition: all 0.3s ease;
+          transition: all 0.2s ease;
         }
 
         .clear-button:hover {
-          background: rgba(239, 68, 68, 0.2);
-          border-color: rgba(239, 68, 68, 0.4);
+          background: rgba(239, 68, 68, 0.25);
           transform: translateY(-1px);
-          box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
         }
 
         .notification-body {
@@ -93,24 +83,6 @@ export default function NotificationPanel() {
           flex: 1;
         }
 
-        .notification-body::-webkit-scrollbar {
-          width: 8px;
-        }
-
-        .notification-body::-webkit-scrollbar-track {
-          background: rgba(15, 23, 42, 0.6);
-          border-radius: 4px;
-        }
-
-        .notification-body::-webkit-scrollbar-thumb {
-          background: linear-gradient(135deg, rgba(16, 185, 129, 0.4) 0%, rgba(52, 211, 153, 0.4) 100%);
-          border-radius: 4px;
-        }
-
-        .notification-body::-webkit-scrollbar-thumb:hover {
-          background: linear-gradient(135deg, rgba(16, 185, 129, 0.6) 0%, rgba(52, 211, 153, 0.6) 100%);
-        }
-
         .empty-state {
           text-align: center;
           color: #94a3b8;
@@ -119,98 +91,95 @@ export default function NotificationPanel() {
         }
 
         .notification-item {
-          background: linear-gradient(145deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.6) 100%);
-          padding: 1rem;
+          position: relative;
+          min-height: 64px;
+          padding: 0.9rem 1rem 0.9rem 1.25rem;
           border-radius: 12px;
           cursor: pointer;
-          transition: all 0.3s ease;
-          animation: fadeIn 0.4s ease-out;
-          position: relative;
+          animation: fadeIn 0.3s ease-out;
+          transition: all 0.2s ease;
           overflow: hidden;
         }
 
         .notification-item::before {
-          content: '';
+          content: "";
           position: absolute;
           left: 0;
           top: 0;
           height: 100%;
           width: 4px;
-          transition: width 0.3s ease;
-        }
-
-        .notification-item:hover {
-          background: linear-gradient(145deg, rgba(30, 41, 59, 1) 0%, rgba(15, 23, 42, 0.8) 100%);
-          transform: translateX(4px);
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-        }
-
-        .notification-item:hover::before {
-          width: 6px;
+          background: var(--border-color);
         }
 
         .notification-item-unread {
-          background: linear-gradient(145deg, rgba(59, 130, 246, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
-          border: 1px solid rgba(16, 185, 129, 0.2);
+          background: linear-gradient(
+            145deg,
+            rgba(59, 130, 246, 0.12),
+            rgba(16, 185, 129, 0.06)
+          );
+          border: 1px solid rgba(16, 185, 129, 0.25);
         }
 
         .notification-item-read {
-          background: linear-gradient(145deg, rgba(30, 41, 59, 0.5) 0%, rgba(15, 23, 42, 0.4) 100%);
-          border: 1px solid rgba(255, 255, 255, 0.03);
-          opacity: 0.8;
+          background: linear-gradient(
+            145deg,
+            rgba(30, 41, 59, 0.6),
+            rgba(15, 23, 42, 0.5)
+          );
+          border: 1px solid rgba(255, 255, 255, 0.05);
+          opacity: 0.7;
         }
 
         .notification-item-title {
           font-weight: 700;
           font-size: 0.9rem;
-          margin-bottom: 0.375rem;
-          letter-spacing: -0.2px;
+          margin-bottom: 0.25rem;
         }
 
         .notification-item-message {
           font-size: 0.8rem;
           color: #cbd5e1;
           line-height: 1.5;
-          margin-bottom: 0.5rem;
+          margin-bottom: 0.25rem;
         }
 
         .notification-item-time {
           font-size: 0.7rem;
           color: #64748b;
-          font-weight: 500;
         }
 
         @media (max-width: 768px) {
           .notification-panel {
             right: 16px;
             width: calc(100vw - 32px);
-            max-width: 380px;
           }
         }
       `}</style>
 
-      <div className="notification-panel">
+      <div
+        className="notification-panel"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* HEADER */}
         <div className="notification-header">
           <span className="notification-title">Notifications</span>
 
           <button
-            onClick={(e) => {
-              e.stopPropagation();
-              clearAll();
-            }}
-            className="clear-button"
-          >
-            Clear All
-          </button>
+  onClick={(e) => {
+    e.stopPropagation();
+    markAllAsRead();
+  }}
+  className="clear-button"
+>
+  Mark all as read
+</button>
+
         </div>
 
         {/* BODY */}
         <div className="notification-body">
           {notifications.length === 0 && (
-            <p className="empty-state">
-              No notifications
-            </p>
+            <p className="empty-state">No notifications</p>
           )}
 
           {notifications.map((n) => {
@@ -220,23 +189,13 @@ export default function NotificationPanel() {
               <div
                 key={n.id}
                 onClick={() => markAsRead(n.id)}
-                className={`notification-item ${n.read ? 'notification-item-read' : 'notification-item-unread'}`}
-                style={{
-                  '--border-color': color,
-                }}
+                className={`notification-item ${
+                  n.read
+                    ? "notification-item-read"
+                    : "notification-item-unread"
+                }`}
+                style={{ "--border-color": color }}
               >
-                {/* Border accent */}
-                <div style={{
-                  position: 'absolute',
-                  left: 0,
-                  top: 0,
-                  height: '100%',
-                  width: '4px',
-                  background: color,
-                  transition: 'width 0.3s ease'
-                }}></div>
-
-                {/* TITLE */}
                 <p
                   className="notification-item-title"
                   style={{ color }}
@@ -244,12 +203,10 @@ export default function NotificationPanel() {
                   {n.title}
                 </p>
 
-                {/* MESSAGE */}
                 <p className="notification-item-message">
                   {n.message}
                 </p>
 
-                {/* TIME */}
                 <p className="notification-item-time">
                   {n.time}
                 </p>

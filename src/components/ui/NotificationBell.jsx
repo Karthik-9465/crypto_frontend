@@ -1,13 +1,32 @@
 import { Bell } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import NotificationPanel from "./NotificationPanel";
 import { useNotifications } from "../../context/NotificationContext";
 
 export default function NotificationBell() {
-  const { notifications } = useNotifications();
+  const { notifications , markAllAsRead } = useNotifications();
+
+  // ✅ MISSING STATE (FIX)
   const [open, setOpen] = useState(false);
 
-  const unread = notifications.filter((n) => !n.read).length;
+const unread = notifications.filter((n) => !n.read).length;
+
+  const panelRef = useRef(null);
+
+  // ✅ OUTSIDE CLICK CLOSE
+  useEffect(() => {
+    if (!open) return;
+
+    const handleOutside = (e) => {
+      if (panelRef.current && !panelRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleOutside);
+    return () =>
+      document.removeEventListener("mousedown", handleOutside);
+  }, [open]);
 
   return (
     <>
@@ -83,19 +102,30 @@ export default function NotificationBell() {
 
       <div className="notification-bell-container">
         <button
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => {
+           setOpen((prev) => !prev);
+           markAllAsRead(); // 🔥 CLICK CHESINAPUDE CLEAR
+            }}
           className="notification-bell-button"
         >
           <Bell size={20} className="bell-icon" />
           {unread > 0 && (
-            <span className="notification-badge">
-              {unread}
-            </span>
+            <span className="notification-badge">{unread}</span>
           )}
         </button>
 
-        {open && <NotificationPanel onClose={() => setOpen(false)} />}
+        {open && (
+          <div ref={panelRef}>
+            {/* ✅ PASS onClose */}
+            <NotificationPanel onClose={() => setOpen(false)} />
+          </div>
+        )}
       </div>
     </>
   );
 }
+
+
+
+
+

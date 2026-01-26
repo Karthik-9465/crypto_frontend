@@ -4,6 +4,17 @@ import {
   fetchIncrementalTrades,
 } from "../services/tradeService";
 
+
+// ✅ FIX: Backend datetime → JS compatible
+const formatTradeDate = (dateStr) => {
+  if (!dateStr) return "-";
+
+  // "2026-01-20 10:00:00.000000"
+  const normalized = dateStr.replace(" ", "T").split(".")[0];
+  return new Date(normalized).toLocaleDateString();
+};
+
+
 /* ================= COST BASIS + P/L ================= */
 function calculateSummary(trades) {
   let totalBuy = 0;
@@ -576,8 +587,8 @@ export default function TradesPage() {
                     <td>{t.quantity}</td>
                     <td>${t.price.toFixed(2)}</td>
                     <td className="trade-date">
-                      {new Date(t.tradeTime).toLocaleString()}
-                    </td>
+                     {formatTradeDate(t.tradeTime)}
+                      </td>
                   </tr>
                 ))}
               </tbody>

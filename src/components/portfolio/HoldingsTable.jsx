@@ -88,24 +88,12 @@ export default function HoldingsTable({
           color: #60a5fa;
         }
 
-        .action-btn.view:hover {
-          color: #93c5fd;
-        }
-
         .action-btn.edit {
           color: #34d399;
         }
 
-        .action-btn.edit:hover {
-          color: #6ee7b7;
-        }
-
         .action-btn.delete {
           color: #f87171;
-        }
-
-        .action-btn.delete:hover {
-          color: #fca5a5;
         }
 
         .empty-state {
@@ -129,12 +117,11 @@ export default function HoldingsTable({
 
           <tbody>
             {data.map((h, i) => {
-              // 👉 Treat as MANUAL by default if walletType not present
               const isManual =
                 !h.walletType || h.walletType === "MANUAL";
 
               return (
-                <tr key={i}>
+                <tr key={h.assetSymbol}>
                   <td>
                     <span className="asset-symbol">{h.assetSymbol}</span>
                   </td>
@@ -151,9 +138,10 @@ export default function HoldingsTable({
 
                   <td>
                     <div className="action-buttons">
-                      {/* VIEW – always */}
+                      {/* VIEW */}
                       {onView && (
                         <button
+                          type="button"
                           onClick={() => onView(h)}
                           className="action-btn view"
                           title="View"
@@ -162,9 +150,10 @@ export default function HoldingsTable({
                         </button>
                       )}
 
-                      {/* EDIT – manual only */}
+                      {/* EDIT */}
                       {onEdit && isManual && (
                         <button
+                          type="button"
                           onClick={() => onEdit(h)}
                           className="action-btn edit"
                           title="Edit"
@@ -173,9 +162,10 @@ export default function HoldingsTable({
                         </button>
                       )}
 
-                      {/* DELETE – manual only */}
+                      {/* DELETE */}
                       {onDelete && isManual && (
                         <button
+                          type="button"   
                           onClick={() => onDelete(h)}
                           className="action-btn delete"
                           title="Delete"

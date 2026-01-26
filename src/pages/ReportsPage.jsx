@@ -21,6 +21,7 @@ export default function ReportsPage() {
   const [assetInput, setAssetInput] = useState("");
   const [assetPnL, setAssetPnL] = useState(null);
   const [assetLoading, setAssetLoading] = useState(false);
+  const [assetError, setAssetError] = useState(""); // 🔥 NEW
 
   // 🔥 STRICT MODE GUARD
   const hasLoadedRef = useRef(false);
@@ -52,7 +53,7 @@ export default function ReportsPage() {
     loadReports();
   }, []);
 
-  /* ================= ASSET PNL ================= */
+  /* ================= ASSET PNL (FIXED) ================= */
   const handleAssetPnL = async () => {
     if (!assetInput.trim()) return;
 
@@ -61,12 +62,25 @@ export default function ReportsPage() {
     try {
       setAssetLoading(true);
       setAssetPnL(null);
+      setAssetError(""); // 🔥 reset
 
       const res = await fetchAssetPnL(symbol);
       setAssetPnL(res?.data?.data || null);
-    } catch {
-      setAssetPnL(null);
-    } finally {
+    } catch (e) {
+  let msg = "You don’t have such assets purchased yet";
+
+  if (e?.response?.data) {
+    if (typeof e.response.data === "string") {
+      msg = e.response.data; // 🔥 YOUR CASE
+    } else if (e.response.data.message) {
+      msg = e.response.data.message;
+    }
+  }
+
+  setAssetError(msg);
+  setAssetPnL(null);
+}
+ finally {
       setAssetLoading(false);
     }
   };
@@ -93,6 +107,7 @@ export default function ReportsPage() {
 
   return (
     <>
+      {/* 🔴 CSS / DESIGN — UNCHANGED */}
       <style>{`
         body {
           background: linear-gradient(135deg, #4169e1 0%, #1e3a8a 100%);
@@ -190,6 +205,11 @@ export default function ReportsPage() {
           font-weight: 600;
         }
 
+        .error-msg {
+          color: #f87171;
+          margin-top: 1rem;
+        }
+
         .export-section {
           display: flex;
           justify-content: flex-end;
@@ -240,6 +260,10 @@ export default function ReportsPage() {
           </div>
 
           {assetLoading && <p>Loading...</p>}
+
+          {!assetLoading && assetError && (
+            <p className="error-msg">{assetError}</p>
+          )}
 
           {!assetLoading && assetPnL && (
             <div className="asset-results">

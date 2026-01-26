@@ -196,7 +196,13 @@ export default function PortfolioPage() {
     if (!ok) return;
 
     await deleteManualHolding(asset.assetSymbol);
-    loadHoldings(); // single controlled refresh
+
+// 🔥 ONLY manual state update (NO refresh feeling)
+setManualHoldings((prev) =>
+prev.filter((h) => h.assetSymbol !== asset.assetSymbol)
+
+);
+
   };
 
   return (
@@ -348,11 +354,15 @@ export default function PortfolioPage() {
           />
         )}
 
-        <ManualHoldingDrawer
-          asset={editAsset}
-          onClose={() => setEditAsset(null)}
-          onSaved={loadHoldings}
-        />
+   <ManualHoldingDrawer
+  asset={editAsset}
+  onClose={() => setEditAsset(null)}
+  onSaved={(newAsset) =>
+    setManualHoldings((prev) => [...prev, newAsset])
+  }
+/>
+
+
       </div>
     </>
   );

@@ -1,19 +1,38 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useRef,
+} from "react";
 
 const NotificationContext = createContext();
 
 export const NotificationProvider = ({ children }) => {
-  const [notifications, setNotifications] = useState(() => {
-    const saved = localStorage.getItem("notifications");
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [notifications, setNotifications] = useState([]);
+  const hasLoaded = useRef(false);
 
-  // 🔔 ADD
+  /* ✅ LOAD FROM LOCAL STORAGE (ONLY ONCE) */
+  useEffect(() => {
+    if (hasLoaded.current) return;
+    hasLoaded.current = true;
+
+    const saved = localStorage.getItem("notifications");
+    if (saved) {
+      try {
+        setNotifications(JSON.parse(saved));
+      } catch {
+        setNotifications([]);
+      }
+    }
+  }, []);
+
+  /* 🔔 ADD NOTIFICATION */
   const notify = (notification) => {
     setNotifications((prev) => {
       const updated = [
         {
-          id: Date.now(),
+          id: Date.now() + Math.random(), // unique id
           time: new Date().toLocaleTimeString(),
           read: false,
           ...notification,
@@ -25,12 +44,11 @@ export const NotificationProvider = ({ children }) => {
         "notifications",
         JSON.stringify(updated)
       );
-
       return updated;
     });
   };
 
-  // ✅ MARK READ
+  /* ✅ MARK SINGLE AS READ */
   const markAsRead = (id) => {
     setNotifications((prev) => {
       const updated = prev.map((n) =>
@@ -41,20 +59,34 @@ export const NotificationProvider = ({ children }) => {
         "notifications",
         JSON.stringify(updated)
       );
-
       return updated;
     });
   };
 
-  // ❌ CLEAR (THIS IS KEY FIX)
-  const clearAll = () => {
-    setNotifications([]); // UI clear
-    localStorage.removeItem("notifications"); // STORAGE clear
+  /* ✅ MARK ALL AS READ (THIS IS THE MAIN ACTION) */
+  const markAllAsRead = () => {
+    setNotifications((prev) => {
+      const updated = prev.map((n) => ({
+        ...n,
+        read: true,
+      }));
+
+      localStorage.setItem(
+        "notifications",
+        JSON.stringify(updated)
+      );
+      return updated;
+    });
   };
 
   return (
     <NotificationContext.Provider
-      value={{ notifications, notify, markAsRead, clearAll }}
+      value={{
+        notifications,
+        notify,
+        markAsRead,
+        markAllAsRead,
+      }}
     >
       {children}
     </NotificationContext.Provider>

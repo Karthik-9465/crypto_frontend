@@ -1,16 +1,41 @@
 import { useEffect, useState } from "react";
 import { manualAddEditHolding } from "../../services/holdingService";
 
-export default function ManualHoldingDrawer({
-  asset,
-  onClose,
-  onSaved,
-}) {
+/* 🔑 BACKEND ENUM MAPPING */
+const CHAIN_MAP = {
+  BINANCE: "BINANCE_SMART_CHAIN",
+  BSC: "BINANCE_SMART_CHAIN",
+  BINANCE_SMART_CHAIN: "BINANCE_SMART_CHAIN",
+
+  ETH: "ETHEREUM",
+  ETHEREUM: "ETHEREUM",
+
+  MATIC: "POLYGON",
+  POLYGON: "POLYGON",
+
+  AVAX: "AVALANCHE",
+  AVALANCHE: "AVALANCHE",
+
+  ARB: "ARBITRUM",
+  ARBITRUM: "ARBITRUM",
+
+  OP: "OPTIMISM",
+  OPTIMISM: "OPTIMISM",
+
+  BASE: "BASE",
+  SEPOLIA: "SEPOLIA",
+};
+
+export default function ManualHoldingDrawer({ asset, onClose, onSaved }) {
   const [symbol, setSymbol] = useState("");
   const [qty, setQty] = useState("");
   const [avgCost, setAvgCost] = useState("");
   const [chain, setChain] = useState("");
   const [address, setAddress] = useState("");
+
+  const [errors, setErrors] = useState({});
+  const [apiError, setApiError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (asset) {
@@ -22,21 +47,94 @@ export default function ManualHoldingDrawer({
     }
   }, [asset]);
 
+  // 🔒 stop background scroll
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, []);
+
   if (!asset) return null;
 
+  const validate = () => {
+    const newErrors = {};
+
+    // mandatory
+    if (!symbol.trim()) newErrors.symbol = "Asset is required";
+    if (!qty || Number(qty) <= 0) newErrors.qty = "Quantity is required";
+    if (!avgCost || Number(avgCost) <= 0)
+      newErrors.avgCost = "Average cost is required";
+
+    // conditional rule
+    if (address.trim() && !chain.trim()) {
+      newErrors.chain = "Chain is required when address is provided";
+    }
+
+    if (chain.trim() && !address.trim()) {
+      newErrors.address = "Address is required when chain is provided";
+    }
+
+    // enum validation
+    if (
+      chain.trim() &&
+      !CHAIN_MAP[chain.trim().toUpperCase()]
+    ) {
+      newErrors.chain = "Unsupported chain";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const save = async () => {
-    await manualAddEditHolding({
-      assetSymbol: symbol.toUpperCase(),
-      quantity: Number(qty),
-      avgCost: Number(avgCost),
+    setApiError("");
 
-      // ✅ OPTIONAL FIELDS (paper requirement)
-      chain: chain.trim() ? chain.trim().toUpperCase() : null,
-      address: address.trim() ? address.trim() : null,
-    });
+    if (!validate()) return;
 
-    onSaved();   // refresh only after save
-    onClose();
+    const normalizedChain = chain.trim()
+      ? CHAIN_MAP[chain.trim().toUpperCase()]
+      : null;
+
+    try {
+      setLoading(true);
+
+      const res = await manualAddEditHolding({
+  assetSymbol: symbol.toUpperCase(),
+  quantity: Number(qty),
+  avgCost: Number(avgCost),
+  chain: normalizedChain,
+  address: address.trim() ? address.trim() : null,
+});
+
+// 🔥 TELL PARENT TO UPDATE STATE
+onSaved(res?.data || {
+  assetSymbol: symbol.toUpperCase(),
+  quantity: Number(qty),
+  avgCost: Number(avgCost),
+  chain: normalizedChain,
+  address: address.trim() ? address.trim() : null,
+});
+
+onClose();
+
+    } catch (err) {
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Something went wrong";
+
+      setApiError(msg);
+
+      if (msg.toLowerCase().includes("address")) {
+        setErrors((prev) => ({
+          ...prev,
+          address: msg,
+        }));
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -59,7 +157,7 @@ export default function ManualHoldingDrawer({
           backdrop-filter: blur(4px);
           display: flex;
           justify-content: flex-end;
-          z-index: 1000;
+          z-index: 9999;
           animation: fadeIn 0.3s ease-out;
         }
 
@@ -80,30 +178,16 @@ export default function ManualHoldingDrawer({
           margin-bottom: 2rem;
           padding-bottom: 1.5rem;
           border-bottom: 2px solid rgba(255, 255, 255, 0.05);
-          letter-spacing: -0.5px;
         }
 
         .manual-drawer-input {
           width: 100%;
           padding: 0.875rem 1rem;
-          margin-bottom: 1rem;
+          margin-bottom: 0.25rem;
           background: rgba(15, 23, 42, 0.6);
           border: 2px solid #334155;
           border-radius: 12px;
           color: #ffffff;
-          font-size: 0.95rem;
-          outline: none;
-          transition: all 0.3s ease;
-        }
-
-        .manual-drawer-input::placeholder {
-          color: #475569;
-        }
-
-        .manual-drawer-input:focus {
-          border-color: #3b82f6;
-          background: rgba(15, 23, 42, 0.9);
-          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
         }
 
         .manual-drawer-buttons {
@@ -115,43 +199,18 @@ export default function ManualHoldingDrawer({
         .manual-drawer-btn {
           flex: 1;
           padding: 1rem;
-          border: none;
           border-radius: 12px;
           font-weight: 700;
-          font-size: 0.95rem;
           cursor: pointer;
-          transition: all 0.3s ease;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
         }
 
         .manual-drawer-btn-save {
           background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-          color: #000000;
-          box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
-        }
-
-        .manual-drawer-btn-save:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 6px 25px rgba(16, 185, 129, 0.4);
         }
 
         .manual-drawer-btn-cancel {
           background: rgba(239, 68, 68, 0.2);
-          border: 1px solid rgba(239, 68, 68, 0.3);
           color: #fca5a5;
-        }
-
-        .manual-drawer-btn-cancel:hover {
-          background: rgba(239, 68, 68, 0.3);
-          transform: translateY(-2px);
-        }
-
-        @media (max-width: 640px) {
-          .manual-drawer-panel {
-            width: 100%;
-            padding: 2rem 1.5rem;
-          }
         }
       `}</style>
 
@@ -165,24 +224,33 @@ export default function ManualHoldingDrawer({
             className="manual-drawer-input"
             placeholder="Asset Symbol (BTC)"
             value={symbol}
-            onChange={(e) => setSymbol(e.target.value)}
-          />
+            onChange={(e) => {
+  const value = e.target.value.toUpperCase();
 
-          {/* OPTIONAL */}
+  // allow ONLY letters
+  if (/^[A-Z]*$/.test(value)) {
+    setSymbol(value);
+  }
+}}
+
+          />
+          {errors.symbol && <p style={{ color: "red" }}>{errors.symbol}</p>}
+
           <input
             className="manual-drawer-input"
             placeholder="Chain (optional)"
             value={chain}
             onChange={(e) => setChain(e.target.value)}
           />
+          {errors.chain && <p style={{ color: "red" }}>{errors.chain}</p>}
 
-          {/* OPTIONAL */}
           <input
             className="manual-drawer-input"
             placeholder="Address (optional)"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
           />
+          {errors.address && <p style={{ color: "red" }}>{errors.address}</p>}
 
           <input
             type="number"
@@ -191,6 +259,7 @@ export default function ManualHoldingDrawer({
             value={qty}
             onChange={(e) => setQty(e.target.value)}
           />
+          {errors.qty && <p style={{ color: "red" }}>{errors.qty}</p>}
 
           <input
             type="number"
@@ -199,13 +268,17 @@ export default function ManualHoldingDrawer({
             value={avgCost}
             onChange={(e) => setAvgCost(e.target.value)}
           />
+          {errors.avgCost && <p style={{ color: "red" }}>{errors.avgCost}</p>}
+
+          {apiError && <p style={{ color: "red" }}>{apiError}</p>}
 
           <div className="manual-drawer-buttons">
             <button
               onClick={save}
+              disabled={loading}
               className="manual-drawer-btn manual-drawer-btn-save"
             >
-              Save
+              {loading ? "Saving..." : "Save"}
             </button>
             <button
               onClick={onClose}
