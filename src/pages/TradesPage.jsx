@@ -9,9 +9,7 @@ import {
 const formatTradeDate = (dateStr) => {
   if (!dateStr) return "-";
 
-  // "2026-01-20 10:00:00.000000"
-  const normalized = dateStr.replace(" ", "T").split(".")[0];
-  return new Date(normalized).toLocaleDateString();
+  return new Date(dateStr + "Z").toLocaleString();
 };
 
 
@@ -587,7 +585,7 @@ export default function TradesPage() {
                     <td>{t.quantity}</td>
                     <td>${t.price.toFixed(2)}</td>
                     <td className="trade-date">
-                     {formatTradeDate(t.tradeTime)}
+                     {formatTradeDate(t.executedAt)}
                       </td>
                   </tr>
                 ))}

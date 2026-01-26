@@ -52,10 +52,16 @@ export default function RiskAlertsPage() {
         refreshManualHoldings(),
       ]);
 
-      const holdings = [
-        ...(exRes?.data || []),
-        ...(manRes?.data || []),
-      ];
+     const holdingsMap = new Map();
+
+[...(exRes?.data || []), ...(manRes?.data || [])].forEach((h) => {
+  if (h?.assetSymbol && !holdingsMap.has(h.assetSymbol)) {
+    holdingsMap.set(h.assetSymbol, h);
+  }
+});
+
+const holdings = Array.from(holdingsMap.values());
+
 
       if (!holdings.length) {
         setAlerts([]);
